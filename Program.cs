@@ -17,6 +17,7 @@ class Program
         if (args.Length == 0)
         {
             Console.WriteLine("Please provide a skin name.");
+            Console.Write("Press any key to close..."); Console.ReadLine();
             Environment.Exit(0);
         }
 
@@ -24,10 +25,12 @@ class Program
         string SkinFbxPath = args[0];
         if(!File.Exists(SkinFbxPath)){
             Console.WriteLine($"File {Path.GetFileName(SkinFbxPath)} doesn't exists.");
+            Console.Write("Press any key to close..."); Console.ReadLine();
             Environment.Exit(0);
         }
         if(!SkinFbxPath.Contains("\\Work\\")){
             Console.WriteLine("File isn't in a Work folder.");
+            Console.Write("Press any key to close..."); Console.ReadLine();
             Environment.Exit(0);
         }
         string Skin_Name = Path.GetFileNameWithoutExtension(SkinFbxPath);
@@ -35,6 +38,7 @@ class Program
         string Skin_Directory = Path.GetDirectoryName(SkinFbxPath) ?? "";
         if(String.IsNullOrEmpty(Skin_Directory)){
             Console.WriteLine("Unhandled error.");
+            Console.Write("Press any key to close..."); Console.ReadLine();
             Environment.Exit(0);
         }
 
@@ -53,11 +57,13 @@ class Program
 
         if(String.IsNullOrEmpty(TM_Install_Path)){
             Console.WriteLine("Please specify a TM_Install_Path variable in the app.config");
+            Console.Write("Press any key to close..."); Console.ReadLine();
             Environment.Exit(0);
         }
         
         if(String.IsNullOrEmpty(TM_User_Path)){
             Console.WriteLine("Please specify a TM_User_Path variable in the app.config");
+            Console.Write("Press any key to close..."); Console.ReadLine();
             Environment.Exit(0);
         }
 
@@ -74,6 +80,7 @@ class Program
         if (!File.Exists(Path.Combine(Skin_Directory, Skin_Name + ".MeshParams.xml")))
         {
             Console.WriteLine(Skin_Name + ".MeshParams.xml doesn't exist.");
+            Console.Write("Press any key to close..."); Console.ReadLine();
             Environment.Exit(0);
         }
 
@@ -88,6 +95,7 @@ class Program
         if(!nadeoImporterOutput.Split('\n').Reverse().Skip(1).First().StartsWith("Created :user:") && !nadeoImporterOutput.Split('\n').Reverse().Skip(1).First().EndsWith(".Mesh.gbx")){
             Console.WriteLine(nadeoImporterOutput);
             Console.WriteLine("NadeoImporter failed, check the output above.");
+            Console.Write("Press any key to close..."); Console.ReadLine();
             Environment.Exit(0);
         }else{
             Console.WriteLine("NadeoImporter process OK...");
@@ -112,6 +120,7 @@ class Program
         Console.WriteLine(ZIPFiles(SkinFbxPath, Skin_Directory, Skin_Name));
 
         Console.WriteLine("\nSkin created successfully!");
+        Console.Write("Press any key to close..."); Console.ReadLine();
     }
 
     static void GenerateMeshParams(string filePath, string Skin_Directory, string Skin_Name)
@@ -260,6 +269,7 @@ class Program
             {
                 Directory.CreateDirectory(destinationFolder);
                 Console.WriteLine("No CarSport folder found. Please create it.");
+                Console.Write("Press any key to close..."); Console.ReadLine();
                 Environment.Exit(0);
             }
 
