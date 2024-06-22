@@ -55,7 +55,6 @@ class Program
         Console.WriteLine("Starting NadeoImporter process...");
         string nadeoImporterOutput = StartProcess(Path.Combine(TM_Install_Path, "NadeoImporter.exe"), "Mesh " + "Skins\\Models\\" + Skin_Name + "\\" + Skin_Name + ".fbx");
         if(nadeoImporterOutput.Split('\n').Reverse().Skip(1).First() != "Created :user:\\Skins\\Models\\" + Skin_Name + "\\" + Skin_Name + ".Mesh.gbx\r"){
-        // if(!nadeoImporterOutput.Split('\n').Reverse().Skip(1).First().StartsWith("Created ")){
             Console.WriteLine(nadeoImporterOutput);
             Console.WriteLine("NadeoImporter failed, check the output above.");
             Environment.Exit(0);
