@@ -20,7 +20,20 @@ class Program
             Environment.Exit(0);
         }
 
-        string Skin_Name = args[0];
+        // string Skin_Name = args[0];
+        string SkinFbxPath = args[0];
+        if(!File.Exists(args[0])){
+            Console.WriteLine($"File {Path.GetFileName(args[0])} doesn't exists.");
+            Environment.Exit(0);
+        }
+        if(!args[0].Contains("\\Work\\")){
+            Console.WriteLine("File isn't in a Work folder.");
+            Environment.Exit(0);
+        }
+        string Skin_Name = Path.GetFileNameWithoutExtension(args[0]);
+        string Skin_Name_Ext = Path.GetFileName(args[0]);
+        string Skin_Directory = Path.GetDirectoryName(args[0]);
+        
         bool fakeshad = args.Length > 1 && args[1].ToLower() == "--fakeshad";
         
         string TM_Install_Path = ConfigurationManager.AppSettings["TM_Install_Path"] ?? "";
@@ -36,7 +49,7 @@ class Program
             Environment.Exit(0);
         }
 
-        GenerateMeshParams(TM_User_Path, Skin_Name);
+        GenerateMeshParams(args[0], Skin_Directory, Skin_Name);
 
         string currentFolder = AppDomain.CurrentDomain.BaseDirectory;
         if(!File.Exists(Path.Combine(currentFolder, "skinfix.exe"))){
@@ -46,15 +59,22 @@ class Program
         }
         string Converter_Exe_Path = Path.Combine(currentFolder, "skinfix.exe");
 
-        if (!File.Exists(Path.Combine(TM_User_Path, "Work", "Skins", "Models", Skin_Name, Skin_Name + ".MeshParams.xml")))
+        if (!File.Exists(Path.Combine(Skin_Directory, Skin_Name + ".MeshParams.xml")))
         {
             Console.WriteLine(Skin_Name + ".MeshParams.xml doesn't exist.");
             Environment.Exit(0);
         }
 
         Console.WriteLine("Starting NadeoImporter process...");
-        string nadeoImporterOutput = StartProcess(Path.Combine(TM_Install_Path, "NadeoImporter.exe"), "Mesh " + "Skins\\Models\\" + Skin_Name + "\\" + Skin_Name + ".fbx");
-        if(nadeoImporterOutput.Split('\n').Reverse().Skip(1).First() != "Created :user:\\Skins\\Models\\" + Skin_Name + "\\" + Skin_Name + ".Mesh.gbx\r"){
+
+        int index = args[0].IndexOf("Work") + "Work".Length;
+        string skinRelativePath = args[0].Substring(index);
+        int lastSlashIndex = skinRelativePath.LastIndexOf("\\");
+        skinRelativePath = skinRelativePath.Substring(0, lastSlashIndex);
+        Console.WriteLine(skinRelativePath);
+
+        string nadeoImporterOutput = StartProcess(Path.Combine(TM_Install_Path, "NadeoImporter.exe"), "Mesh " + Path.Combine(skinRelativePath, Skin_Name_Ext));
+        if(!nadeoImporterOutput.Split('\n').Reverse().Skip(1).First().StartsWith("Created :user:") && !nadeoImporterOutput.Split('\n').Reverse().Skip(1).First().EndsWith(".Mesh.gbx")){
             Console.WriteLine(nadeoImporterOutput);
             Console.WriteLine("NadeoImporter failed, check the output above.");
             Environment.Exit(0);
@@ -76,16 +96,17 @@ class Program
         Console.WriteLine("skinfix process OK...");
 
         Console.WriteLine("\nZipping files...");
-        Console.WriteLine(ZIPFiles(TM_User_Path, Skin_Name));
+        Console.WriteLine(ZIPFiles(args[0], Skin_Directory, Skin_Name));
 
         Console.WriteLine("\nSkin created successfully!");
     }
 
-    static void GenerateMeshParams(string TM_User_Path, string Skin_Name)
+    static void GenerateMeshParams(string filePath, string Skin_Directory, string Skin_Name)
     {
         using (var context = new AssimpContext())
         {
-            var scene = context.ImportFile(Path.Combine(TM_User_Path, "Work", "Skins", "Models", Skin_Name, Skin_Name + ".fbx"));
+            // var scene = context.ImportFile(Path.Combine(TM_User_Path, "Work", "Skins", "Models", Skin_Name, Skin_Name + ".fbx"));
+            var scene = context.ImportFile(filePath);
             var fbxMaterials = scene.Materials;
             XmlDocument doc = new XmlDocument();
 
@@ -134,7 +155,8 @@ class Program
             root.AppendChild(doc.CreateElement("Color"));
 
             // Save the XML document to a file
-            doc.Save(Path.Combine(TM_User_Path, "Work", "Skins", "Models", Skin_Name, Skin_Name + ".MeshParams.xml"));
+            // doc.Save(Path.Combine(TM_User_Path, "Work", "Skins", "Models", Skin_Name, Skin_Name + ".MeshParams.xml"));
+            doc.Save(Path.Combine(Skin_Directory, Skin_Name + ".MeshParams.xml"));
         }
     }
 
@@ -189,10 +211,10 @@ class Program
         return processOutput;
     }
 
-    static string ZIPFiles(string TM_User_Path, string Skin_Name){
+    static string ZIPFiles(string filePath, string Skin_Directory, string Skin_Name){
         string[] fileExtensions = { "MainBody.Mesh.Gbx" };
-        string folderWork = Path.Combine(TM_User_Path, "Work", "Skins", "Models", Skin_Name);
-        string folderSkin = Path.Combine(TM_User_Path, "Skins", "Models", Skin_Name);
+        string folderWork = Path.Combine(Skin_Directory);
+        string folderSkin = Path.Combine(Skin_Directory.Replace("Work\\", ""));
         var filesWork = Directory.GetFiles(folderWork);
         var filesSkin = Directory.GetFiles(folderSkin);
         var filesToZip = filesWork.Where(file =>
@@ -216,7 +238,9 @@ class Program
                 }
             }
 
-            string destinationFolder = Path.Combine(TM_User_Path, "Skins", "Models", "CarSport");
+            int index = filePath.IndexOf("Work");
+            string trackmaniaDocumentRootPath = filePath.Substring(0, index - 1);
+            string destinationFolder = Path.Combine(trackmaniaDocumentRootPath, "Skins", "Models", "CarSport");
             if (!Directory.Exists(destinationFolder))
             {
                 Directory.CreateDirectory(destinationFolder);
