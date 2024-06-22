@@ -34,7 +34,15 @@ class Program
         string Skin_Name_Ext = Path.GetFileName(SkinFbxPath);
         string Skin_Directory = Path.GetDirectoryName(SkinFbxPath);
 
-        bool fakeshad = args.Length > 1 && args[1].ToLower() == "--fakeshad";
+        bool fakeshad = false;
+        if(args.Length > 1 && args[1].ToLower() == "--fakeshad"){
+            fakeshad = true;
+        }else{
+            Console.Write("Do you want enable the FakeShad.dds? (y/n) > ");
+            string cki = Console.ReadLine();
+            if (cki.ToString().ToLower() == "y")
+                fakeshad = true;
+        }
         
         string TM_Install_Path = ConfigurationManager.AppSettings["TM_Install_Path"] ?? "";
         string TM_User_Path = ConfigurationManager.AppSettings["TM_User_Path"] ?? "";
@@ -71,7 +79,6 @@ class Program
         string skinRelativePath = SkinFbxPath.Substring(index);
         int lastSlashIndex = skinRelativePath.LastIndexOf("\\");
         skinRelativePath = skinRelativePath.Substring(0, lastSlashIndex);
-        Console.WriteLine(skinRelativePath);
 
         string nadeoImporterOutput = StartProcess(Path.Combine(TM_Install_Path, "NadeoImporter.exe"), "Mesh " + Path.Combine(skinRelativePath, Skin_Name_Ext));
         if(!nadeoImporterOutput.Split('\n').Reverse().Skip(1).First().StartsWith("Created :user:") && !nadeoImporterOutput.Split('\n').Reverse().Skip(1).First().EndsWith(".Mesh.gbx")){
@@ -86,12 +93,14 @@ class Program
         if (fakeshad)
         {
             Console.WriteLine("\nStarting skinfix process with FakeShad...");
-            Process.Start(Converter_Exe_Path, Path.Combine(TM_User_Path, "Skins", "Models", Skin_Name, Skin_Name + ".Mesh.gbx") + " --fakeshad").WaitForExit();
+            StartProcess(Converter_Exe_Path, Path.Combine(TM_User_Path, "Skins", "Models", Skin_Name, Skin_Name + ".Mesh.gbx") + " --fakeshad");
+            // Process.Start(Converter_Exe_Path, Path.Combine(TM_User_Path, "Skins", "Models", Skin_Name, Skin_Name + ".Mesh.gbx") + " --fakeshad").WaitForExit();
         }
         else
         {
             Console.WriteLine("\nStarting skinfix process...");
-            Process.Start(Converter_Exe_Path, Path.Combine(TM_User_Path, "Skins", "Models", Skin_Name, Skin_Name + ".Mesh.gbx")).WaitForExit();
+            StartProcess(Converter_Exe_Path, Path.Combine(TM_User_Path, "Skins", "Models", Skin_Name, Skin_Name + ".Mesh.gbx"));
+            // Process.Start(Converter_Exe_Path, Path.Combine(TM_User_Path, "Skins", "Models", Skin_Name, Skin_Name + ".Mesh.gbx")).WaitForExit();
         }
         Console.WriteLine("skinfix process OK...");
 
