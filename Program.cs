@@ -22,18 +22,18 @@ class Program
 
         // string Skin_Name = args[0];
         string SkinFbxPath = args[0];
-        if(!File.Exists(args[0])){
-            Console.WriteLine($"File {Path.GetFileName(args[0])} doesn't exists.");
+        if(!File.Exists(SkinFbxPath)){
+            Console.WriteLine($"File {Path.GetFileName(SkinFbxPath)} doesn't exists.");
             Environment.Exit(0);
         }
-        if(!args[0].Contains("\\Work\\")){
+        if(!SkinFbxPath.Contains("\\Work\\")){
             Console.WriteLine("File isn't in a Work folder.");
             Environment.Exit(0);
         }
-        string Skin_Name = Path.GetFileNameWithoutExtension(args[0]);
-        string Skin_Name_Ext = Path.GetFileName(args[0]);
-        string Skin_Directory = Path.GetDirectoryName(args[0]);
-        
+        string Skin_Name = Path.GetFileNameWithoutExtension(SkinFbxPath);
+        string Skin_Name_Ext = Path.GetFileName(SkinFbxPath);
+        string Skin_Directory = Path.GetDirectoryName(SkinFbxPath);
+
         bool fakeshad = args.Length > 1 && args[1].ToLower() == "--fakeshad";
         
         string TM_Install_Path = ConfigurationManager.AppSettings["TM_Install_Path"] ?? "";
@@ -49,7 +49,7 @@ class Program
             Environment.Exit(0);
         }
 
-        GenerateMeshParams(args[0], Skin_Directory, Skin_Name);
+        GenerateMeshParams(SkinFbxPath, Skin_Directory, Skin_Name);
 
         string currentFolder = AppDomain.CurrentDomain.BaseDirectory;
         if(!File.Exists(Path.Combine(currentFolder, "skinfix.exe"))){
@@ -67,8 +67,8 @@ class Program
 
         Console.WriteLine("Starting NadeoImporter process...");
 
-        int index = args[0].IndexOf("Work") + "Work".Length;
-        string skinRelativePath = args[0].Substring(index);
+        int index = SkinFbxPath.IndexOf("Work") + "Work".Length;
+        string skinRelativePath = SkinFbxPath.Substring(index);
         int lastSlashIndex = skinRelativePath.LastIndexOf("\\");
         skinRelativePath = skinRelativePath.Substring(0, lastSlashIndex);
         Console.WriteLine(skinRelativePath);
@@ -96,7 +96,7 @@ class Program
         Console.WriteLine("skinfix process OK...");
 
         Console.WriteLine("\nZipping files...");
-        Console.WriteLine(ZIPFiles(args[0], Skin_Directory, Skin_Name));
+        Console.WriteLine(ZIPFiles(SkinFbxPath, Skin_Directory, Skin_Name));
 
         Console.WriteLine("\nSkin created successfully!");
     }
