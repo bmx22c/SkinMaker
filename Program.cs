@@ -73,7 +73,7 @@ class Program
 
         string currentFolder = AppDomain.CurrentDomain.BaseDirectory;
         if(!File.Exists(Path.Combine(currentFolder, "skinfix.exe"))){
-            Console.WriteLine("skinfix.exe not found. Attempting to download...");
+            Console.WriteLine("\nskinfix.exe not found. Attempting to download...");
             DownloadSkinFix(Path.Combine(currentFolder, "skinfix.exe")).GetAwaiter().GetResult();
             Console.WriteLine("skinfix.exe downloaded. Continuing.");
         }
