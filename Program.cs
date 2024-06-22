@@ -3,6 +3,7 @@ using System.IO;
 using System.IO.Compression;
 using System.Linq;
 using System.Diagnostics;
+using System.Configuration;
 
 class Program
 {
@@ -17,9 +18,13 @@ class Program
         string Skin_Name = args[0];
         bool fakeshad = args.Length > 1 && args[1].ToLower() == "--fakeshad";
 
-        string TM_Install_Path = @"D:\Games\Epic Games\TrackmaniaNext";
-        string TM_User_Path = @"C:\Users\bmx22\Documents\Trackmania2020";
-        string Converter_Exe_Path = @"C:\Users\bmx22\Downloads\test exe\skin_script.exe";
+        // string TM_Install_Path = @"D:\Games\Epic Games\TrackmaniaNext";
+        // string TM_User_Path = @"C:\Users\bmx22\Documents\Trackmania2020";
+        // string Converter_Exe_Path = @"C:\Users\bmx22\Downloads\test exe\skin_script.exe";
+        
+        string TM_Install_Path = ConfigurationManager.AppSettings["TM_Install_Path"];
+        string TM_User_Path = ConfigurationManager.AppSettings["TM_User_Path"];
+        string Converter_Exe_Path = ConfigurationManager.AppSettings["Converter_Exe_Path"];
 
         if (!File.Exists(Path.Combine(TM_User_Path, "Work", "Skins", "Models", Skin_Name, Skin_Name + ".MeshParams.xml")))
         {
@@ -41,9 +46,6 @@ class Program
         string[] fileExtensions = { "MainBody.Mesh.Gbx" };
         string folder = Path.Combine(TM_User_Path, "Skins", "Models", Skin_Name);
         var files = Directory.GetFiles(folder);
-        for(int i = 0; i < files.Length; i++){
-            Console.WriteLine(files[i]);
-        }
         var filesToZip = files.Where(file => Path.GetFileName(file).ToLower() != (Skin_Name + ".Mesh.Gbx").ToLower());
 
         if (filesToZip.Any())
