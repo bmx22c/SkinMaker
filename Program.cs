@@ -32,14 +32,18 @@ class Program
         }
         string Skin_Name = Path.GetFileNameWithoutExtension(SkinFbxPath);
         string Skin_Name_Ext = Path.GetFileName(SkinFbxPath);
-        string Skin_Directory = Path.GetDirectoryName(SkinFbxPath);
+        string Skin_Directory = Path.GetDirectoryName(SkinFbxPath) ?? "";
+        if(String.IsNullOrEmpty(Skin_Directory)){
+            Console.WriteLine("Unhandled error.");
+            Environment.Exit(0);
+        }
 
         bool fakeshad = false;
         if(args.Length > 1 && args[1].ToLower() == "--fakeshad"){
             fakeshad = true;
         }else{
             Console.Write("Do you want enable the FakeShad.dds? (y/n) > ");
-            string cki = Console.ReadLine();
+            string cki = Console.ReadLine() ?? "";
             if (cki.ToString().ToLower() == "y")
                 fakeshad = true;
         }
