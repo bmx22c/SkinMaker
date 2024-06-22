@@ -67,7 +67,9 @@ class Program
             Environment.Exit(0);
         }
 
+        Console.WriteLine("\nGenerating " + Skin_Name + ".MesParams.xml based on " + Skin_Name_Ext + "...");
         GenerateMeshParams(SkinFbxPath, Skin_Directory, Skin_Name);
+        Console.WriteLine(Skin_Name + ".MeshParams.xml generation OK.");
 
         string currentFolder = AppDomain.CurrentDomain.BaseDirectory;
         if(!File.Exists(Path.Combine(currentFolder, "skinfix.exe"))){
@@ -84,7 +86,7 @@ class Program
             Environment.Exit(0);
         }
 
-        Console.WriteLine("Starting NadeoImporter process...");
+        Console.WriteLine("\nStarting NadeoImporter process...");
 
         int index = SkinFbxPath.IndexOf("Work") + "Work".Length;
         string skinRelativePath = SkinFbxPath.Substring(index);
@@ -98,7 +100,7 @@ class Program
             Console.Write("Press any key to close..."); Console.ReadLine();
             Environment.Exit(0);
         }else{
-            Console.WriteLine("NadeoImporter process OK...");
+            Console.WriteLine("NadeoImporter process OK.");
         }
         // Process.Start(Path.Combine(TM_Install_Path, "NadeoImporter.exe"), "Mesh " + "Skins\\Models\\" + Skin_Name + "\\" + Skin_Name + ".fbx").WaitForExit();
 
