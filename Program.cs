@@ -142,6 +142,8 @@ class Program
                     material.SetAttribute("Model", "SkinDmgDecal");
                 else if(currMat.StartsWith("Gems_"))
                     material.SetAttribute("Model", "Gems");
+                else if(currMat.StartsWith("GlassRefract_"))
+                    material.SetAttribute("Model", "GlassRefract");
                 else
                     material.SetAttribute("Model", "DetailsDmgNormal");
                 
