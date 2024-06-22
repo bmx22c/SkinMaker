@@ -4,6 +4,7 @@ using System.IO.Compression;
 using System.Linq;
 using System.Diagnostics;
 using System.Configuration;
+using System.Net;
 
 class Program
 {
@@ -24,7 +25,21 @@ class Program
         
         string TM_Install_Path = ConfigurationManager.AppSettings["TM_Install_Path"];
         string TM_User_Path = ConfigurationManager.AppSettings["TM_User_Path"];
-        string Converter_Exe_Path = ConfigurationManager.AppSettings["Converter_Exe_Path"];
+        // string Converter_Exe_Path = ConfigurationManager.AppSettings["Converter_Exe_Path"];
+        // string Converter_Exe_Path = ConfigurationManager.AppSettings["Converter_Exe_Path"];
+
+        string currentFolder = AppDomain.CurrentDomain.BaseDirectory;
+        Console.WriteLine(currentFolder);
+        if(!File.Exists(Path.Combine(currentFolder, "skinfix.exe"))){
+            Console.WriteLine("skinfix.exe not found. Attempting to download...");
+            using (WebClient client = new WebClient())
+            {
+                client.DownloadFile(@"https://openplanet.dev/file/119/download", Path.Combine(currentFolder, "skinfix.exe"));
+            }
+            Console.WriteLine("skinfix.exe downloaded. Continuing.");
+        }
+
+        string Converter_Exe_Path = Path.Combine(currentFolder, "skinfix.exe");
 
         if (!File.Exists(Path.Combine(TM_User_Path, "Work", "Skins", "Models", Skin_Name, Skin_Name + ".MeshParams.xml")))
         {
@@ -44,13 +59,22 @@ class Program
         }
 
         string[] fileExtensions = { "MainBody.Mesh.Gbx" };
-        string folder = Path.Combine(TM_User_Path, "Skins", "Models", Skin_Name);
-        var files = Directory.GetFiles(folder);
-        var filesToZip = files.Where(file => Path.GetFileName(file).ToLower() != (Skin_Name + ".Mesh.Gbx").ToLower());
+        string folderWork = Path.Combine(TM_User_Path, "Work", "Skins", "Models", Skin_Name);
+        string folderSkin = Path.Combine(TM_User_Path, "Skins", "Models", Skin_Name);
+        var filesWork = Directory.GetFiles(folderWork);
+        var filesSkin = Directory.GetFiles(folderSkin);
+        var filesToZip = filesWork.Where(file =>
+            !Path.GetFileName(file).ToLower().Contains("meshparams") &&
+            !Path.GetFileName(file).ToLower().EndsWith(".fbx") &&
+            Path.GetFileName(file).ToLower() != (Skin_Name + ".Mesh.Gbx").ToLower()
+        ).ToList();
+
+        // Add MainBody.Mesh.gbx to list of files
+        filesToZip.AddRange(filesSkin.Where(file => Path.GetFileName(file).ToLower() != (Skin_Name + ".Mesh.Gbx").ToLower()).ToList());
 
         if (filesToZip.Any())
         {
-            string zipFileName = Path.Combine(folder, Skin_Name + ".zip");
+            string zipFileName = Path.Combine(folderWork, Skin_Name + ".zip");
 
             using (ZipArchive archive = ZipFile.Open(zipFileName, ZipArchiveMode.Create))
             {
@@ -73,7 +97,7 @@ class Program
         }
         else
         {
-            Console.WriteLine("No files found in " + folder + " with extensions: " + string.Join(", ", fileExtensions));
+            Console.WriteLine("No files found in " + folderWork + " with extensions: " + string.Join(", ", fileExtensions));
         }
     }
 }
