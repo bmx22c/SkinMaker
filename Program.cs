@@ -119,7 +119,7 @@ class Program
         Console.WriteLine("skinfix process OK...");
 
         Console.WriteLine("\nZipping files...");
-        Console.WriteLine(ZIPFiles(SkinFbxPath, Skin_Directory, Skin_Name));
+        Console.WriteLine(ZIPFiles(SkinFbxPath, Skin_Directory, Skin_Name, fakeshad));
 
         Console.WriteLine("\nSkin created successfully!");
         Console.Write("Press any key to close..."); Console.ReadLine();
@@ -237,7 +237,7 @@ class Program
         return processOutput;
     }
 
-    static string ZIPFiles(string filePath, string Skin_Directory, string Skin_Name){
+    static string ZIPFiles(string filePath, string Skin_Directory, string Skin_Name, bool fakeshad){
         string[] fileExtensions = { "MainBody.Mesh.Gbx" };
         string folderWork = Path.Combine(Skin_Directory);
         string folderSkin = Path.Combine(Skin_Directory.Replace("Work\\", ""));
@@ -248,6 +248,12 @@ class Program
             !Path.GetFileName(file).ToLower().EndsWith(".fbx") &&
             Path.GetFileName(file).ToLower() != (Skin_Name + ".Mesh.Gbx").ToLower()
         ).ToList();
+
+        // Remove FakeShad.dds from file list if there is any
+        if(!fakeshad)
+            for (int i = filesToZip.Count - 1; i > 0; i--)
+                if(Path.GetFileName(filesToZip[i]).ToLower() == "fakeshad.dds")
+                    filesToZip.RemoveAt(i);
 
         // Add MainBody.Mesh.gbx to list of files
         filesToZip.AddRange(filesSkin.Where(file => Path.GetFileName(file).ToLower() != (Skin_Name + ".Mesh.Gbx").ToLower()).ToList());
