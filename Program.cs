@@ -22,7 +22,6 @@ class Program
             Environment.Exit(0);
         }
 
-        // string Skin_Name = args[0];
         string SkinFbxPath = args[0];
         if(!File.Exists(SkinFbxPath)){
             Console.WriteLine($"File {Path.GetFileName(SkinFbxPath)} doesn't exists.");
@@ -54,16 +53,9 @@ class Program
         }
         
         string TM_Install_Path = ConfigurationManager.AppSettings["TM_Install_Path"] ?? "";
-        string TM_User_Path = ConfigurationManager.AppSettings["TM_User_Path"] ?? "";
 
         if(String.IsNullOrEmpty(TM_Install_Path)){
             Console.WriteLine("Please specify a TM_Install_Path variable in the app.config");
-            Console.Write("Press any key to close..."); Console.ReadLine();
-            Environment.Exit(0);
-        }
-        
-        if(String.IsNullOrEmpty(TM_User_Path)){
-            Console.WriteLine("Please specify a TM_User_Path variable in the app.config");
             Console.Write("Press any key to close..."); Console.ReadLine();
             Environment.Exit(0);
         }
@@ -106,19 +98,16 @@ class Program
         }else{
             Console.WriteLine("NadeoImporter process OK.");
         }
-        // Process.Start(Path.Combine(TM_Install_Path, "NadeoImporter.exe"), "Mesh " + "Skins\\Models\\" + Skin_Name + "\\" + Skin_Name + ".fbx").WaitForExit();
 
         if (fakeshad)
         {
             Console.WriteLine("\nStarting skinfix process with FakeShad...");
-            StartProcess(Converter_Exe_Path, Path.Combine(TM_User_Path, "Skins", "Models", Skin_Name, Skin_Name + ".Mesh.gbx") + " --fakeshad");
-            // Process.Start(Converter_Exe_Path, Path.Combine(TM_User_Path, "Skins", "Models", Skin_Name, Skin_Name + ".Mesh.gbx") + " --fakeshad").WaitForExit();
+            StartProcess(Converter_Exe_Path, Path.Combine(Path.GetDirectoryName(SkinFbxPath.Replace("Work\\", "")), Skin_Name + ".Mesh.gbx") + " --fakeshad");
         }
         else
         {
             Console.WriteLine("\nStarting skinfix process...");
-            StartProcess(Converter_Exe_Path, Path.Combine(TM_User_Path, "Skins", "Models", Skin_Name, Skin_Name + ".Mesh.gbx"));
-            // Process.Start(Converter_Exe_Path, Path.Combine(TM_User_Path, "Skins", "Models", Skin_Name, Skin_Name + ".Mesh.gbx")).WaitForExit();
+            StartProcess(Converter_Exe_Path, Path.Combine(Path.GetDirectoryName(SkinFbxPath.Replace("Work\\", "")), Skin_Name + ".Mesh.gbx"));
         }
         Console.WriteLine("skinfix process OK...");
 
@@ -133,7 +122,6 @@ class Program
     {
         using (var context = new AssimpContext())
         {
-            // var scene = context.ImportFile(Path.Combine(TM_User_Path, "Work", "Skins", "Models", Skin_Name, Skin_Name + ".fbx"));
             var scene = context.ImportFile(filePath);
             var fbxMaterials = scene.Materials;
             XmlDocument doc = new XmlDocument();
@@ -185,7 +173,6 @@ class Program
             root.AppendChild(doc.CreateElement("Color"));
 
             // Save the XML document to a file
-            // doc.Save(Path.Combine(TM_User_Path, "Work", "Skins", "Models", Skin_Name, Skin_Name + ".MeshParams.xml"));
             doc.Save(Path.Combine(Skin_Directory, Skin_Name + ".MeshParams.xml"));
         }
     }
@@ -225,17 +212,11 @@ class Program
 
             // Start the process
             process.Start();
-
-            // Begin asynchronous read of standard output and error
             process.StandardInput.Flush();
             process.StandardInput.Close();
 
             processOutput = process.StandardOutput.ReadToEnd();
-            // Wait for the process to complete
             process.WaitForExit();
-
-            // Display exit code and completion message
-            // Console.WriteLine($"Process exited with code {process.ExitCode}");
         }
 
         return processOutput;
@@ -302,10 +283,8 @@ class Program
             string url = "https://openplanet.dev/file/119";
             string html = await client.GetStringAsync(url);
 
-            // Console.WriteLine(html);
-
             HtmlDocument htmlDoc = new HtmlDocument();
-            htmlDoc.LoadHtml(html); // load your HTML here
+            htmlDoc.LoadHtml(html);
 
             // Use the XPath to select the element
             var node = htmlDoc.DocumentNode.SelectSingleNode("//body/section[position()=2]//div[@class='container']//div[@class='columns']//table[contains(@class, 'table')]//tr[position()=3]//td//span");
@@ -313,7 +292,6 @@ class Program
             {
                 var title = node.GetAttributeValue("title", "default_value_if_not_found");
 
-                // Console.WriteLine("Title: " + title);
                 if(title != LastExeModifiedDate){
                     Console.WriteLine("New skinfix.exe version found, downloading...");
                     DownloadSkinFix(Path.Combine(currentFolder, "skinfix.exe")).GetAwaiter().GetResult();
