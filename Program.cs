@@ -9,6 +9,7 @@ using System.Net.Http;
 using Assimp;
 using System.Xml;
 using System.Text;
+using HtmlAgilityPack;
 
 class Program
 {
@@ -76,6 +77,9 @@ class Program
             Console.WriteLine("\nskinfix.exe not found. Attempting to download...");
             DownloadSkinFix(Path.Combine(currentFolder, "skinfix.exe")).GetAwaiter().GetResult();
             Console.WriteLine("skinfix.exe downloaded. Continuing.");
+        }else{
+            Console.WriteLine("\nChecking skinfix.exe last modified date...");
+            CheckDateSkinFix(currentFolder).GetAwaiter().GetResult();
         }
         string Converter_Exe_Path = Path.Combine(currentFolder, "skinfix.exe");
 
@@ -287,6 +291,62 @@ class Program
         else
         {
             return "No files found in " + folderWork;
+        }
+    }
+
+    static async Task CheckDateSkinFix(string currentFolder)
+    {
+        string LastExeModifiedDate = ConfigurationManager.AppSettings["LastExeModifiedDate"] ?? "";
+        using (HttpClient client = new HttpClient())
+        {
+            string url = "https://openplanet.dev/file/119";
+            string html = await client.GetStringAsync(url);
+
+            // Console.WriteLine(html);
+
+            HtmlDocument htmlDoc = new HtmlDocument();
+            htmlDoc.LoadHtml(html); // load your HTML here
+
+            // Use the XPath to select the element
+            var node = htmlDoc.DocumentNode.SelectSingleNode("//body/section[position()=2]//div[@class='container']//div[@class='columns']//table[contains(@class, 'table')]//tr[position()=3]//td//span");
+            if (node != null)
+            {
+                var title = node.GetAttributeValue("title", "default_value_if_not_found");
+
+                // Console.WriteLine("Title: " + title);
+                if(title != LastExeModifiedDate){
+                    Console.WriteLine("New skinfix.exe version found, downloading...");
+                    DownloadSkinFix(Path.Combine(currentFolder, "skinfix.exe")).GetAwaiter().GetResult();
+                    Console.WriteLine("New skinfix.exe version downloaded.");
+
+                    Configuration config = ConfigurationManager.OpenExeConfiguration(ConfigurationUserLevel.None);
+                    AppSettingsSection appSettings = (AppSettingsSection)config.GetSection("appSettings");
+                    if (appSettings != null)
+                    {
+                        // Modify the existing setting or add a new one
+                        if (appSettings.Settings["LastExeModifiedDate"] != null)
+                        {
+                            appSettings.Settings["LastExeModifiedDate"].Value = title;
+                        }
+                        else
+                        {
+                            appSettings.Settings.Add("LastExeModifiedDate", title);
+                        }
+
+                        // Save the configuration file
+                        config.Save(ConfigurationSaveMode.Modified);
+
+                        // Refresh the appSettings section to reflect changes
+                        ConfigurationManager.RefreshSection("appSettings");
+                    }
+                }else{
+                    Console.WriteLine("skinfix.exe is up to date.");
+                }
+            }
+            else
+            {
+                Console.WriteLine("Element not found.");
+            }
         }
     }
 }
