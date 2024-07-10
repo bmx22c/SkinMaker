@@ -3,11 +3,11 @@ Automates the process of generating skin files by calling the Nadeo Importer by 
 
 ## How to use
 First, modify the `SkinMaker.dll.config` and specify where your Trackmania installation folder is.
-To know that, you can open Trackmania, then press `CTRL+SHIFT+ESC`, then right click on Trackmania and select "Open file location" (something along those lines, my Windows is in French). That's your TM installation folder.
-Copy it and paste it in the `TM_Install_Path` key.
+To know that, you can open Trackmania, then press `CTRL+SHIFT+ESC`, then right click on Trackmania and select "Open file location" (something along those lines, my Windows is in French). That's your TM installation folder.  
+Copy it and paste it in the `TM_Install_Path` key.  
 Leave the `LastExeModifiedDate` empty.
 
-Prepare your .fbx within the `Documents/Trackmania/Work/` folder. Place your textures alongside it.
+Prepare your .fbx within the `Documents/Trackmania/Work/` folder. Place your textures alongside it.  
 The FBX file can be wherever your want, as long as it's inside the `Work` folder.
 
 Then drag and drop your .fbx file onto the SkinMaker.exe and follow the instructions.
@@ -26,9 +26,9 @@ In order:
 
 ## Build
 Modify the code.
-- Build with `dotnet build`.
-- Run it with `.\bin\Debug\net6.0\SkinMaker.exe "{path to fbx file inside a Documents/Trackmania/Work/ folder}"`.
-- Create release with `dotnet publish -c Release -r win-x64 /p:PublishSingleFile=true /p:EnableCompressionInSingleFile=true`
+Build with `dotnet build`.  
+Run it with `.\bin\Debug\net6.0\SkinMaker.exe "{path to fbx file inside a Documents/Trackmania/Work/ folder}"`.  
+Create release with `dotnet publish -c Release -r win-x64 /p:PublishSingleFile=true /p:EnableCompressionInSingleFile=true`
 
 ## Requirements
 - Nadeo Importer installed in your Trackmania installation folder
