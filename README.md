@@ -3,7 +3,7 @@ Automates the process of generating skin files by calling the Nadeo Importer by 
 
 ## How to use
 First, modify the `SkinMaker.dll.config` and specify where your Trackmania installation folder is.
-To know that, you can open Trackmania, then press `CTRL+SHIFT+ESC`, then right click on Trackmania and select "Open file location" (something along those lines, my Windows is in French). That's your TM installation folder.  
+To know that, you can open Trackmania, then press `CTRL+SHIFT+ESC`, under the "Process" tab, right click on Trackmania and select "Open file location" (something along those lines, my Windows is in French). That's your TM installation folder.  
 Copy it and paste it in the `TM_Install_Path` key.  
 Leave the `LastExeModifiedDate` empty.
 
