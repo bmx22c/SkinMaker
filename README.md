@@ -23,3 +23,9 @@ In order:
 - Call `skinfix.exe` to convert the file to TM2020 skin
 - ZIP all necessary files
 - Move ZIP into CarSport folder
+
+## Build
+Modify the code.
+- Build with `dotnet build`.
+- Run it with `.\bin\Debug\net6.0\SkinMaker.exe "{path to fbx file inside a Documents/Trackmania/Work/ folder}"`.
+- Create release with `dotnet publish -c Release -r win-x64 /p:PublishSingleFile=true /p:EnableCompressionInSingleFile=true`
