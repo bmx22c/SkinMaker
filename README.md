@@ -2,7 +2,7 @@
 Automates the process of generating skin files by calling the Nadeo Importer by itself, calling [skinfix.exe](https://openplanet.dev/file/119) by itself, ZIP the generated files and move the ZIP file into the CarSport folder. Automatically.
 
 ## How to use
-First, modify the `app.config` and specify where your Trackmania installation folder is.
+First, modify the `SkinMaker.dll.config` and specify where your Trackmania installation folder is.
 To know that, you can open Trackmania, then press `CTRL+SHIFT+ESC`, then right click on Trackmania and select "Open file location" (something along those lines, my Windows is in French). That's your TM installation folder.
 Copy it and paste it in the `TM_Install_Path` key.
 Leave the `LastExeModifiedDate` empty.
@@ -29,3 +29,6 @@ Modify the code.
 - Build with `dotnet build`.
 - Run it with `.\bin\Debug\net6.0\SkinMaker.exe "{path to fbx file inside a Documents/Trackmania/Work/ folder}"`.
 - Create release with `dotnet publish -c Release -r win-x64 /p:PublishSingleFile=true /p:EnableCompressionInSingleFile=true`
+
+## Requirements
+- Nadeo Importer installed in your Trackmania installation folder
