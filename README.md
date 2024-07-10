@@ -12,7 +12,7 @@ The FBX file can be wherever your want, as long as it's inside the `Work` folder
 
 Then drag and drop your .fbx file onto the SkinMaker.exe and follow the instructions.
 
-![Video](https://github.com/bmx22c/SkinMaker/raw/master/assets/2024-06-23%2002-08-06.mp4)
+![Video](https://github.com/bmx22c/SkinMaker/assets/6803869/93edf421-5652-4af9-95ee-2ddb05f87b31)
 
 ## What it does
 In order:
