@@ -1,1 +1,25 @@
 # SkinMaker
+Automates the process of generating skin files by calling the Nadeo Importer by itself, calling [skinfix.exe](https://openplanet.dev/file/119) by itself, ZIP the generated files and move the ZIP file into the CarSport folder. Automatically.
+
+## How to use
+First, modify the `app.config` and specify where your Trackmania installation folder is.
+To know that, you can open Trackmania, then press `CTRL+SHIFT+ESC`, then right click on Trackmania and select "Open file location" (something along those lines, my Windows is in French). That's your TM installation folder.
+Copy it and paste it in the `TM_Install_Path` key.
+Leave the `LastExeModifiedDate` empty.
+
+Prepare your .fbx within the `Documents/Trackmania/Work/` folder. Place your textures alongside it.
+The FBX file can be wherever your want, as long as it's inside the `Work` folder.
+
+Then drag and drop your .fbx file onto the SkinMaker.exe and follow the instructions.
+
+## What it does
+In order:
+- Checks if `skinfix.exe` is downloaded
+    - If yes, check if it's up to date. If it's not, it'll download the latest version
+    - If no, it'll download the latest version
+- Opens the fbx file you passed
+- Generates the .MeshParams.xml dynamically based on the materials inside your fbx
+- Call NadeoImporter to generate the first part of the skin
+- Call `skinfix.exe` to convert the file to TM2020 skin
+- ZIP all necessary files
+- Move ZIP into CarSport folder
