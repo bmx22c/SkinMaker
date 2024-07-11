@@ -47,4 +47,4 @@ Run it with `.\bin\Debug\net6.0\SkinMaker.exe "{path to fbx file inside a Docume
 Create release with `dotnet publish -c Release -r win-x64 /p:PublishSingleFile=true /p:EnableCompressionInSingleFile=true`
 
 ## Requirements
-- Nadeo Importer installed in your Trackmania installation folder
+- [Nadeo Importer](https://doc.trackmania.com/create/nadeo-importer/01-download-and-install/) installed in your Trackmania installation folder
