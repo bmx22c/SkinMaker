@@ -4,7 +4,9 @@ Automates the process of generating skin files by calling the Nadeo Importer by 
 ## How to use
 First, modify the `SkinMaker.dll.config` and specify where your Trackmania installation folder is.
 To know that, you can open Trackmania, then press `CTRL+SHIFT+ESC`, under the "Processes" tab, right click on Trackmania and select "Open file location" (something along those lines, my Windows is in French). That's your TM installation folder.  
-Copy it and paste it in the `TM_Install_Path` key.  
+Copy it and paste it in the `TM_Install_Path` key, like so:  
+![alt text](assets/example.png)
+
 Leave the `LastExeModifiedDate` empty.
 
 Prepare your .fbx within the `Documents/Trackmania/Work/` folder. Place your textures alongside it.  
@@ -12,6 +14,7 @@ The FBX file can be wherever your want, as long as it's inside the `Work` folder
 
 Then drag and drop your .fbx file onto the SkinMaker.exe and follow the instructions.
 
+Showcase video:
 
 https://github.com/bmx22c/SkinMaker/assets/6803869/60729405-bda0-4f37-be0d-7dcaff1c5e6f
 
