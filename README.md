@@ -11,6 +11,9 @@ Copy it and paste it in the `TM_Install_Path` key, like so:
   <appSettings>
     <add key="TM_Install_Path" value="D:\Games\Epic Games\TrackmaniaNext" />
     <add key="LastExeModifiedDate" value="" />
+    <add key="AutoCloseOnFinish" value="false" />
+    <add key="SkipFakeShadPrompt" value="false" />
+    <add key="FakeShadSkipAutocompleteValue" value="n" />
   </appSettings>
 </configuration>
 ```

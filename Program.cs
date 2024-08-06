@@ -46,10 +46,17 @@ class Program
         if(args.Length > 1 && args[1].ToLower() == "--fakeshad"){
             fakeshad = true;
         }else{
-            Console.Write("Do you want enable the FakeShad.dds? (y/n) > ");
-            string cki = Console.ReadLine() ?? "";
-            if (cki.ToString().ToLower() == "y")
-                fakeshad = true;
+            bool SkipFakeShadPrompt = bool.Parse(ConfigurationManager.AppSettings["SkipFakeShadPrompt"] ?? "false");
+            string FakeShadSkipAutocompleteValue = ConfigurationManager.AppSettings["FakeShadSkipAutocompleteValue"] ?? "n";
+
+            if(!SkipFakeShadPrompt){
+                Console.Write("Do you want enable the FakeShad.dds? (y/n) > ");
+                string cki = Console.ReadLine() ?? "";
+                if (cki.ToString().ToLower() == "y")
+                    fakeshad = true;
+            }else{
+                fakeshad = FakeShadSkipAutocompleteValue.ToLower() == "y";
+            }
         }
         
         string TM_Install_Path = ConfigurationManager.AppSettings["TM_Install_Path"] ?? "";
@@ -115,7 +122,10 @@ class Program
         Console.WriteLine(ZIPFiles(SkinFbxPath, Skin_Directory, Skin_Name, fakeshad));
 
         Console.WriteLine("\nSkin created successfully!");
-        Console.Write("Press any key to close..."); Console.ReadLine();
+        bool AutoCloseOnFinish = bool.Parse(ConfigurationManager.AppSettings["AutoCloseOnFinish"] ?? "false");
+        if(!AutoCloseOnFinish){
+            Console.Write("Press any key to close..."); Console.ReadLine();
+        }
     }
 
     static void GenerateMeshParams(string filePath, string Skin_Directory, string Skin_Name)
