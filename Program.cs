@@ -97,7 +97,7 @@ class Program
 
 
         Console.WriteLine("\nStarting skinfix process...");
-        StartProcess(Converter_Exe_Path, Path.Combine(Path.GetDirectoryName(SkinFbxPath.Replace("Work\\", "")), Skin_Name + ".Mesh.gbx"));
+        StartProcess(Converter_Exe_Path, Path.Combine(Path.GetDirectoryName(SkinFbxPath.Replace("Work\\", "")), Skin_Name + ".Mesh.gbx") + " --out " + Path.Combine(Path.GetDirectoryName(SkinFbxPath.Replace("Work\\", "")), "MainBody.Mesh.Gbx"));
         Console.WriteLine("skinfix process OK...");
 
         Console.WriteLine("\nZipping files...");
