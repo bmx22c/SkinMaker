@@ -1,5 +1,5 @@
 # SkinMaker
-Automates the process of generating skin files by calling the Nadeo Importer by itself, calling [skinfix.exe](https://openplanet.dev/file/119) by itself, ZIP the generated files and move the ZIP file into the CarSport folder. Automatically.
+Automates the process of generating skin files by calling the Nadeo Importer by itself, calling [skinfix.exe](https://github.com/drunub/tm2020-skin-tools/releases/latest/) by itself, ZIP the generated files and move the ZIP file into the CarSport folder. Automatically.
 
 ## How to use
 First, modify the `SkinMaker.dll.config` and specify where your Trackmania installation folder is.
@@ -12,8 +12,6 @@ Copy it and paste it in the `TM_Install_Path` key, like so:
     <add key="TM_Install_Path" value="D:\Games\Epic Games\TrackmaniaNext" />
     <add key="LastExeModifiedDate" value="" />
     <add key="AutoCloseOnFinish" value="false" />
-    <add key="SkipFakeShadPrompt" value="false" />
-    <add key="FakeShadSkipAutocompleteValue" value="n" />
   </appSettings>
 </configuration>
 ```
