@@ -281,6 +281,7 @@ class Program
             {
                 if(skinFixInfo.assets[i].name == "skinfix.exe"){
                     foundSkinfix = true;
+                    gitHubBrowserDownloadUrl = skinFixInfo.assets[i].browser_download_url;
 
                     if(skinFixInfo.assets[i].updated_at.ToString() != LastExeModifiedDate){
                         Console.WriteLine("New skinfix.exe version found, downloading...");
