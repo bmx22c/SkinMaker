@@ -10,9 +10,14 @@ using Assimp;
 using System.Xml;
 using System.Text;
 using HtmlAgilityPack;
+using System.Text.Json;
+using System.Net.Http.Headers;
 
 class Program
 {
+    private static GitHubRoot skinFixInfo = null;
+    private static string gitHubBrowserDownloadUrl = null;
+
     static void Main(string[] args)
     {
         if (args.Length == 0)
@@ -41,28 +46,11 @@ class Program
             Console.Write("Press any key to close..."); Console.ReadLine();
             Environment.Exit(0);
         }
-
-        bool fakeshad = false;
-        if(args.Length > 1 && args[1].ToLower() == "--fakeshad"){
-            fakeshad = true;
-        }else{
-            bool SkipFakeShadPrompt = bool.Parse(ConfigurationManager.AppSettings["SkipFakeShadPrompt"] ?? "false");
-            string FakeShadSkipAutocompleteValue = ConfigurationManager.AppSettings["FakeShadSkipAutocompleteValue"] ?? "n";
-
-            if(!SkipFakeShadPrompt){
-                Console.Write("Do you want enable the FakeShad.dds? (y/n) > ");
-                string cki = Console.ReadLine() ?? "";
-                if (cki.ToString().ToLower() == "y")
-                    fakeshad = true;
-            }else{
-                fakeshad = FakeShadSkipAutocompleteValue.ToLower() == "y";
-            }
-        }
         
         string TM_Install_Path = ConfigurationManager.AppSettings["TM_Install_Path"] ?? "";
 
         if(String.IsNullOrEmpty(TM_Install_Path)){
-            Console.WriteLine("Please specify a TM_Install_Path variable in the app.config");
+            Console.WriteLine("Please specify a TM_Install_Path variable in the SkinMaker.dll.config");
             Console.Write("Press any key to close..."); Console.ReadLine();
             Environment.Exit(0);
         }
@@ -71,6 +59,7 @@ class Program
         GenerateMeshParams(SkinFbxPath, Skin_Directory, Skin_Name);
         Console.WriteLine(Skin_Name + ".MeshParams.xml generation OK.");
 
+        GetSkinFixInfo().GetAwaiter().GetResult();
         string currentFolder = AppDomain.CurrentDomain.BaseDirectory;
         if(!File.Exists(Path.Combine(currentFolder, "skinfix.exe"))){
             Console.WriteLine("\nskinfix.exe not found. Attempting to download...");
@@ -106,20 +95,13 @@ class Program
             Console.WriteLine("NadeoImporter process OK.");
         }
 
-        if (fakeshad)
-        {
-            Console.WriteLine("\nStarting skinfix process with FakeShad...");
-            StartProcess(Converter_Exe_Path, Path.Combine(Path.GetDirectoryName(SkinFbxPath.Replace("Work\\", "")), Skin_Name + ".Mesh.gbx") + " --fakeshad");
-        }
-        else
-        {
-            Console.WriteLine("\nStarting skinfix process...");
-            StartProcess(Converter_Exe_Path, Path.Combine(Path.GetDirectoryName(SkinFbxPath.Replace("Work\\", "")), Skin_Name + ".Mesh.gbx"));
-        }
+
+        Console.WriteLine("\nStarting skinfix process...");
+        StartProcess(Converter_Exe_Path, Path.Combine(Path.GetDirectoryName(SkinFbxPath.Replace("Work\\", "")), Skin_Name + ".Mesh.gbx"));
         Console.WriteLine("skinfix process OK...");
 
         Console.WriteLine("\nZipping files...");
-        Console.WriteLine(ZIPFiles(SkinFbxPath, Skin_Directory, Skin_Name, fakeshad));
+        Console.WriteLine(ZIPFiles(SkinFbxPath, Skin_Directory, Skin_Name));
 
         Console.WriteLine("\nSkin created successfully!");
         bool AutoCloseOnFinish = bool.Parse(ConfigurationManager.AppSettings["AutoCloseOnFinish"] ?? "false");
@@ -189,15 +171,21 @@ class Program
 
     static async Task DownloadSkinFix(string path)
     {
-        using (HttpClient client = new HttpClient())
-        {
-            // Download the file as a Stream
-            using (Stream fileStream = await client.GetStreamAsync(@"https://openplanet.dev/file/119/download"))
+        if(gitHubBrowserDownloadUrl == null){
+            Console.WriteLine("Couldn't retrieve skinfix.exe download URL. Please download it manually at: https://github.com/drunub/tm2020-skin-tools/releases/latest/");
+            Console.Write("Press any key to close..."); Console.ReadLine();
+            Environment.Exit(0);
+        }else{
+            using (HttpClient client = new HttpClient())
             {
-                // Copy the contents of the Stream to a file
-                using (FileStream outputFileStream = new FileStream(path, FileMode.Create, FileAccess.Write, FileShare.None))
+                // Download the file as a Stream
+                using (Stream fileStream = await client.GetStreamAsync(gitHubBrowserDownloadUrl))
                 {
-                    await fileStream.CopyToAsync(outputFileStream);
+                    // Copy the contents of the Stream to a file
+                    using (FileStream outputFileStream = new FileStream(path, FileMode.Create, FileAccess.Write, FileShare.None))
+                    {
+                        await fileStream.CopyToAsync(outputFileStream);
+                    }
                 }
             }
         }
@@ -232,7 +220,7 @@ class Program
         return processOutput;
     }
 
-    static string ZIPFiles(string filePath, string Skin_Directory, string Skin_Name, bool fakeshad){
+    static string ZIPFiles(string filePath, string Skin_Directory, string Skin_Name){
         string[] fileExtensions = { "MainBody.Mesh.Gbx" };
         string folderWork = Path.Combine(Skin_Directory);
         string folderSkin = Path.Combine(Skin_Directory.Replace("Work\\", ""));
@@ -243,12 +231,6 @@ class Program
             !Path.GetFileName(file).ToLower().EndsWith(".fbx") &&
             Path.GetFileName(file).ToLower() != (Skin_Name + ".Mesh.Gbx").ToLower()
         ).ToList();
-
-        // Remove FakeShad.dds from file list if there is any
-        if(!fakeshad)
-            for (int i = filesToZip.Count - 1; i > 0; i--)
-                if(Path.GetFileName(filesToZip[i]).ToLower() == "fakeshad.dds")
-                    filesToZip.RemoveAt(i);
 
         // Add MainBody.Mesh.gbx to list of files
         filesToZip.AddRange(filesSkin.Where(file => Path.GetFileName(file).ToLower() != (Skin_Name + ".Mesh.Gbx").ToLower()).ToList());
@@ -287,54 +269,64 @@ class Program
 
     static async Task CheckDateSkinFix(string currentFolder)
     {
-        string LastExeModifiedDate = ConfigurationManager.AppSettings["LastExeModifiedDate"] ?? "";
-        using (HttpClient client = new HttpClient())
-        {
-            string url = "https://openplanet.dev/file/119";
-            string html = await client.GetStringAsync(url);
+        if(skinFixInfo == null){
+            Console.WriteLine("Couldn't retrieve skinfix.exe build date. Please download it manually at: https://github.com/drunub/tm2020-skin-tools/releases/latest/");
+            Console.Write("Press any key to close..."); Console.ReadLine();
+            Environment.Exit(0);
+        }else{
+            string LastExeModifiedDate = ConfigurationManager.AppSettings["LastExeModifiedDate"] ?? "";
 
-            HtmlDocument htmlDoc = new HtmlDocument();
-            htmlDoc.LoadHtml(html);
-
-            // Use the XPath to select the element
-            var node = htmlDoc.DocumentNode.SelectSingleNode("//body/section[position()=2]//div[@class='container']//div[@class='columns']//table[contains(@class, 'table')]//tr[position()=3]//td//span");
-            if (node != null)
+            bool foundSkinfix = false;
+            for (int i = 0; i < skinFixInfo.assets.Count; i++)
             {
-                var title = node.GetAttributeValue("title", "default_value_if_not_found");
+                if(skinFixInfo.assets[i].name == "skinfix.exe"){
+                    foundSkinfix = true;
 
-                if(title != LastExeModifiedDate){
-                    Console.WriteLine("New skinfix.exe version found, downloading...");
-                    DownloadSkinFix(Path.Combine(currentFolder, "skinfix.exe")).GetAwaiter().GetResult();
-                    Console.WriteLine("New skinfix.exe version downloaded.");
+                    if(skinFixInfo.assets[i].updated_at.ToString() != LastExeModifiedDate){
+                        Console.WriteLine("New skinfix.exe version found, downloading...");
+                        DownloadSkinFix(Path.Combine(currentFolder, "skinfix.exe")).GetAwaiter().GetResult();
+                        Console.WriteLine("New skinfix.exe version downloaded.");
 
-                    Configuration config = ConfigurationManager.OpenExeConfiguration(ConfigurationUserLevel.None);
-                    AppSettingsSection appSettings = (AppSettingsSection)config.GetSection("appSettings");
-                    if (appSettings != null)
-                    {
-                        // Modify the existing setting or add a new one
-                        if (appSettings.Settings["LastExeModifiedDate"] != null)
+                        Configuration config = ConfigurationManager.OpenExeConfiguration(ConfigurationUserLevel.None);
+                        AppSettingsSection appSettings = (AppSettingsSection)config.GetSection("appSettings");
+                        if (appSettings != null)
                         {
-                            appSettings.Settings["LastExeModifiedDate"].Value = title;
-                        }
-                        else
-                        {
-                            appSettings.Settings.Add("LastExeModifiedDate", title);
-                        }
+                            // Modify the existing setting or add a new one
+                            if (appSettings.Settings["LastExeModifiedDate"] != null)
+                            {
+                                appSettings.Settings["LastExeModifiedDate"].Value = skinFixInfo.assets[i].updated_at.ToString();
+                            }
+                            else
+                            {
+                                appSettings.Settings.Add("LastExeModifiedDate", skinFixInfo.assets[i].updated_at.ToString());
+                            }
 
-                        // Save the configuration file
-                        config.Save(ConfigurationSaveMode.Modified);
+                            // Save the configuration file
+                            config.Save(ConfigurationSaveMode.Modified);
 
-                        // Refresh the appSettings section to reflect changes
-                        ConfigurationManager.RefreshSection("appSettings");
+                            // Refresh the appSettings section to reflect changes
+                            ConfigurationManager.RefreshSection("appSettings");
+                        }
+                    }else{
+                        Console.WriteLine("skinfix.exe is up to date.");
                     }
-                }else{
-                    Console.WriteLine("skinfix.exe is up to date.");
                 }
             }
-            else
-            {
-                Console.WriteLine("Element not found.");
+
+            if(!foundSkinfix){
+                Console.WriteLine("skinfix.exe wasn't found in the latest release.");
             }
+        }
+    }
+
+    static async Task GetSkinFixInfo()
+    {
+        using (HttpClient client = new HttpClient())
+        {
+            string url = "https://api.github.com/repos/drunub/tm2020-skin-tools/releases/latest";
+            client.DefaultRequestHeaders.UserAgent.ParseAdd("Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:129.0) Gecko/20100101 Firefox/129.0");
+            string json = await client.GetStringAsync(url);
+            skinFixInfo = JsonSerializer.Deserialize<GitHubRoot>(json);
         }
     }
 }
