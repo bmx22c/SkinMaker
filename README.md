@@ -37,9 +37,9 @@ All of your materials should be named according to one of the following patterns
 |             Gems_xxx |             |
 |     GlassRefract_xxx |             |
 
-Each material will use texture files xxx_B.dds, xxx_D.dds etc.
+Each material will use texture files `xxx_B.dds`, `xxx_D.dds` etc.
 
-For example, a material called SkinDmg_Skin will use textures Skin_D.dds, Skin_R.dds.
+For example, a material called `SkinDmg_Skin` will use textures `Skin_D.dds`, `Skin_R.dds`.
 
 ### Export
 Export your .blend file as .fbx. Make sure `Armature > Add Leaf Bones` is **Disabled**.
