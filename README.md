@@ -18,6 +18,32 @@ Copy it and paste it in the `TM_Install_Path` key, like so:
 
 Leave the `LastExeModifiedDate` empty.
 
+### Preparing your model
+
+#### Template
+
+(template link here)
+
+#### Materials
+All of your materials should be named according to one of the following patterns:
+|        Material Name | Description |
+|---------------------:|-------------|
+|          SkinDmg_xxx |             |
+|     SkinDmgDecal_xxx |             |
+| DetailsDmgNormal_xxx | supports _N |
+|  DetailsDmgDecal_xxx |             |
+|    GlassDmgCrack_xxx |             |
+|    GlassDmgDecal_xxx |             |
+|             Gems_xxx |             |
+|     GlassRefract_xxx |             |
+
+Each material will use texture files xxx_B.dds, xxx_D.dds etc.
+
+For example, a material called SkinDmg_Skin will use textures Skin_D.dds, Skin_R.dds.
+
+### Export
+Export your .blend file as .fbx. Make sure `Armature > Add Leaf Bones` is **Disabled**.
+
 Prepare your .fbx within the `Documents/Trackmania/Work/` folder. Place your textures alongside it.  
 The FBX file can be wherever your want, as long as it's inside the `Work` folder.
 
