@@ -12,6 +12,7 @@ using System.Text;
 using HtmlAgilityPack;
 using System.Text.Json;
 using System.Net.Http.Headers;
+using System.Text.RegularExpressions;
 
 class Program
 {
@@ -221,16 +222,17 @@ class Program
     }
 
     static string ZIPFiles(string filePath, string Skin_Directory, string Skin_Name){
-        string[] fileExtensions = { "MainBody.Mesh.Gbx" };
         string folderWork = Path.Combine(Skin_Directory);
         string folderSkin = Path.Combine(Skin_Directory.Replace("Work\\", ""));
         var filesWork = Directory.GetFiles(folderWork);
         var filesSkin = Directory.GetFiles(folderSkin);
-        var filesToZip = filesWork.Where(file =>
-            !Path.GetFileName(file).ToLower().Contains("meshparams") &&
-            !Path.GetFileName(file).ToLower().EndsWith(".fbx") &&
-            Path.GetFileName(file).ToLower() != (Skin_Name + ".Mesh.Gbx").ToLower()
-        ).ToList();
+
+        string filterJSONPattern = @"[^\.]+\.json";
+        string filterDDSPattern = @"[^\.]+\.dds";
+        string filterGBXPattern = @"(?!.*\.mesh\.gbx$)[^\.]+\.[^\.]+\.gbx";
+        string filterPattern = $@"^{filterJSONPattern}|{filterDDSPattern}|{filterGBXPattern}$";
+
+        var filesToZip = filesWork.Where(file => Regex.IsMatch(Path.GetFileName(file).ToLower(), filterPattern)).ToList();
 
         // Add MainBody.Mesh.gbx to list of files
         filesToZip.AddRange(filesSkin.Where(file => Path.GetFileName(file).ToLower() != (Skin_Name + ".Mesh.Gbx").ToLower()).ToList());
