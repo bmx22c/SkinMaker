@@ -6,17 +6,16 @@ class Zip
     private static Utils utils = new Utils();
 
     public Zip(){}
-    
+
     public string ZipFiles(string filePath, string Skin_Directory, string Skin_Name){
         string folderWork = Path.Combine(Skin_Directory);
         string folderSkin = Path.Combine(Skin_Directory.Replace("Work\\", ""));
         var filesWork = Directory.GetFiles(folderWork);
         var filesSkin = Directory.GetFiles(folderSkin);
 
-        string filterJSONPattern = @"[^\.]+\.json";
-        string filterDDSPattern = @"[^\.]+\.dds";
-        string filterGBXPattern = @"(?!.*\.mesh\.gbx$)[^\.]+\.[^\.]+\.gbx";
-        string filterPattern = $@"^{filterJSONPattern}|{filterDDSPattern}|{filterGBXPattern}$";
+        // Yeah I'll just one line this.
+        // It select all JSON, DDS and .XXX.Gbx BUT NOT .mesh.gbx
+        string filterPattern = $@"^[^\.]+\.json|[^\.]+\.dds|(?!.*\.mesh\.gbx$)[^\.]+\.[^\.]+\.gbx$";
 
         var filesToZip = filesWork.Where(file => Regex.IsMatch(Path.GetFileName(file).ToLower(), filterPattern)).ToList();
 
