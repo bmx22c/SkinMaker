@@ -86,13 +86,17 @@ internal class SkinFix
                 }
                 else
                 {
+                    Console.ForegroundColor = ConsoleColor.Green;
                     Console.WriteLine("skinfix.exe is up to date.");
+                    Console.ResetColor();
                 }
             }
 
             if (!foundSkinfix)
             {
+                Console.ForegroundColor = ConsoleColor.Green;
                 Console.WriteLine("skinfix.exe wasn't found in the latest release.");
+                Console.ResetColor();
             }
         }
 

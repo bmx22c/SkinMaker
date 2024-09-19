@@ -7,8 +7,10 @@ namespace SkinMaker;
 internal static class Utils
 {
     public static void ExitWithMessage(string message){
+        Console.ForegroundColor = ConsoleColor.Red;
         Console.WriteLine(message);
-        Console.Write("Press any key to close..."); Console.ReadLine();
+        Console.ResetColor();
+        Console.Write("Press any key to close..."); Console.ReadKey();
         Environment.Exit(0);
     }
     
