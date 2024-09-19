@@ -1,90 +1,111 @@
 using System.Configuration;
+using System.Globalization;
 using System.Text.Json;
 
-class SkinFix
+namespace SkinMaker;
+
+internal class SkinFix
 {
-    private static GitHubRoot skinFixInfo = null;
-    private static string gitHubBrowserDownloadUrl = null;
-    private static Utils utils = new Utils();
-    public async Task DownloadSkinFix(string path)
+    private static GitHubRoot? _skinFixInfo;
+
+    public async Task DownloadSkinFix(string path, string? downloadUrl)
     {
-        if(gitHubBrowserDownloadUrl == null){
-            utils.ExitWithMessage("Couldn't retrieve skinfix.exe download URL. Please download it manually at: https://github.com/drunub/tm2020-skin-tools/releases/latest/");
-        }else{
-            using (HttpClient client = new HttpClient())
-            {
-                // Download the file as a Stream
-                using (Stream fileStream = await client.GetStreamAsync(gitHubBrowserDownloadUrl))
+        if (downloadUrl == null)
+        {
+            if (_skinFixInfo?.assets != null)
+                foreach (var asset in _skinFixInfo.assets)
                 {
-                    // Copy the contents of the Stream to a file
-                    using (FileStream outputFileStream = new FileStream(path, FileMode.Create, FileAccess.Write, FileShare.None))
+                    if (asset.name == "skinfix.exe")
                     {
-                        await fileStream.CopyToAsync(outputFileStream);
+                        downloadUrl = asset.browser_download_url;
+                        break;
                     }
                 }
-            }
         }
+
+        if (downloadUrl == null)
+        {
+            Utils.ExitWithMessage(
+                "Couldn't retrieve skinfix.exe download URL. " +
+                "\nPlease download it manually at: https://github.com/drunub/tm2020-skin-tools/releases/latest/");
+        }
+
+        using HttpClient client = new HttpClient();
+        // Download the file as a Stream
+        await using var fileStream = await client.GetStreamAsync(downloadUrl);
+        // Copy the contents of the Stream to a file
+        await using var outputFileStream = new FileStream(path, FileMode.Create, FileAccess.Write, FileShare.None);
+        await fileStream.CopyToAsync(outputFileStream);
     }
-    public async Task CheckDateSkinFix(string currentFolder)
+
+    public Task CheckDateSkinFix(string currentFolder)
     {
-        if(skinFixInfo == null){
-            utils.ExitWithMessage("Couldn't retrieve skinfix.exe build date. Please download it manually at: https://github.com/drunub/tm2020-skin-tools/releases/latest/");
-        }else{
-            string LastExeModifiedDate = ConfigurationManager.AppSettings["LastExeModifiedDate"] ?? "";
+        if (_skinFixInfo == null)
+        {
+            Utils.ExitWithMessage(
+                "Couldn't retrieve skinfix.exe build date. " +
+                "\nPlease download it manually at: https://github.com/drunub/tm2020-skin-tools/releases/latest/");
+        }
+        else
+        {
+            var lastExeModifiedDate = ConfigurationManager.AppSettings["LastExeModifiedDate"] ?? "";
+            var foundSkinfix = false;
 
-            bool foundSkinfix = false;
-            for (int i = 0; i < skinFixInfo.assets.Count; i++)
+            foreach (var asset in _skinFixInfo.assets)
             {
-                if(skinFixInfo.assets[i].name == "skinfix.exe"){
-                    foundSkinfix = true;
-                    gitHubBrowserDownloadUrl = skinFixInfo.assets[i].browser_download_url;
+                if (asset.name != "skinfix.exe") continue;
+                foundSkinfix = true;
 
-                    if(skinFixInfo.assets[i].updated_at.ToString() != LastExeModifiedDate){
-                        Console.WriteLine("New skinfix.exe version found, downloading...");
-                        DownloadSkinFix(Path.Combine(currentFolder, "skinfix.exe")).GetAwaiter().GetResult();
-                        Console.WriteLine("New skinfix.exe version downloaded.");
+                if (asset.updated_at.ToString(CultureInfo.InvariantCulture) != lastExeModifiedDate)
+                {
+                    Console.WriteLine("New skinfix.exe version found, downloading...");
+                    DownloadSkinFix(Path.Combine(currentFolder, "skinfix.exe"), asset.browser_download_url).GetAwaiter()
+                        .GetResult();
+                    Console.WriteLine("done.");
 
-                        Configuration config = ConfigurationManager.OpenExeConfiguration(ConfigurationUserLevel.None);
-                        AppSettingsSection appSettings = (AppSettingsSection)config.GetSection("appSettings");
-                        if (appSettings != null)
-                        {
-                            // Modify the existing setting or add a new one
-                            if (appSettings.Settings["LastExeModifiedDate"] != null)
-                            {
-                                appSettings.Settings["LastExeModifiedDate"].Value = skinFixInfo.assets[i].updated_at.ToString();
-                            }
-                            else
-                            {
-                                appSettings.Settings.Add("LastExeModifiedDate", skinFixInfo.assets[i].updated_at.ToString());
-                            }
-
-                            // Save the configuration file
-                            config.Save(ConfigurationSaveMode.Modified);
-
-                            // Refresh the appSettings section to reflect changes
-                            ConfigurationManager.RefreshSection("appSettings");
-                        }
-                    }else{
-                        Console.WriteLine("skinfix.exe is up to date.");
+                    Configuration config = ConfigurationManager.OpenExeConfiguration(ConfigurationUserLevel.None);
+                    var appSettings = (AppSettingsSection)config.GetSection("appSettings");
+                    if (appSettings == null) continue;
+                    // Modify the existing setting or add a new one
+                    if (appSettings.Settings["LastExeModifiedDate"] != null)
+                    {
+                        appSettings.Settings["LastExeModifiedDate"].Value =
+                            asset.updated_at.ToString(CultureInfo.InvariantCulture);
                     }
+                    else
+                    {
+                        appSettings.Settings.Add("LastExeModifiedDate",
+                            asset.updated_at.ToString(CultureInfo.InvariantCulture));
+                    }
+
+                    // Save the configuration file
+                    config.Save(ConfigurationSaveMode.Modified);
+
+                    // Refresh the appSettings section to reflect changes
+                    ConfigurationManager.RefreshSection("appSettings");
+                }
+                else
+                {
+                    Console.WriteLine("skinfix.exe is up to date.");
                 }
             }
 
-            if(!foundSkinfix){
+            if (!foundSkinfix)
+            {
                 Console.WriteLine("skinfix.exe wasn't found in the latest release.");
             }
         }
+
+        return Task.CompletedTask;
     }
 
-    public async Task GetSkinFixInfo()
+    public static async Task GetSkinFixInfo()
     {
-        using (HttpClient client = new HttpClient())
-        {
-            string url = "https://api.github.com/repos/drunub/tm2020-skin-tools/releases/latest";
-            client.DefaultRequestHeaders.UserAgent.ParseAdd("Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:129.0) Gecko/20100101 Firefox/129.0");
-            string json = await client.GetStringAsync(url);
-            skinFixInfo = JsonSerializer.Deserialize<GitHubRoot>(json);
-        }
+        using var client = new HttpClient();
+        const string url = "https://api.github.com/repos/drunub/tm2020-skin-tools/releases/latest";
+        client.DefaultRequestHeaders.UserAgent.ParseAdd(
+            "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:129.0) Gecko/20100101 Firefox/129.0");
+        var json = await client.GetStringAsync(url);
+        _skinFixInfo = JsonSerializer.Deserialize<GitHubRoot>(json);
     }
-
 }

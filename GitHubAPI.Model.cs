@@ -1,4 +1,7 @@
 // Root myDeserializedClass = JsonConvert.DeserializeObject<Root>(myJsonResponse);
+
+namespace SkinMaker;
+
 public class GitHubAsset
 {
     public string url { get; set; }
