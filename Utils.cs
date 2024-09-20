@@ -14,18 +14,37 @@ internal static class Utils
         Environment.Exit(0);
     }
     
-    public static List<string> CheckInstalled(string findByName){ 
-        using var key64 = RegistryKey.OpenBaseKey(RegistryHive.LocalMachine, RegistryView.Registry64);
-        var key = key64.OpenSubKey(@"SOFTWARE\Microsoft\Windows\CurrentVersion\Uninstall");
-        if (key == null) return null;
+    public static List<string> CheckInstalled(string findByName){
         List<string> installPath = new(); 
-        
-        foreach (var subkey in key.GetSubKeyNames().Select(keyName => key.OpenSubKey(keyName))) {
-            var displayName = subkey?.GetValue("DisplayName") as string;
-            if (string.IsNullOrEmpty(displayName) || !displayName.Contains(findByName)) continue;
-            installPath.Add(subkey?.GetValue("InstallLocation")?.ToString());
+
+        string[] registryKeys = {
+            @"SOFTWARE\Microsoft\Windows\CurrentVersion\Uninstall",
+            @"SOFTWARE\WOW6432Node\Microsoft\Windows\CurrentVersion\Uninstall"
+        };
+
+        foreach (string registryKey in registryKeys)
+        {
+            using (RegistryKey key = Registry.LocalMachine.OpenSubKey(registryKey))
+            {
+                if (key == null) continue;
+
+                foreach (string subKeyName in key.GetSubKeyNames())
+                {
+                    using (RegistryKey subKey = key.OpenSubKey(subKeyName))
+                    {
+                        if (subKey != null)
+                        {
+                            string displayName = (string)subKey.GetValue("DisplayName");
+                            string installLocation = (string)subKey.GetValue("InstallLocation");
+
+                            if (!string.IsNullOrEmpty(displayName) && displayName.Contains(findByName) && !string.IsNullOrEmpty(installLocation))
+                                installPath.Add($"{displayName} - {installLocation}");
+
+                        }
+                    }
+                }
+            }
         }
-        key.Close();
         return installPath;
     }
 
