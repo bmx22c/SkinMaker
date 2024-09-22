@@ -7,9 +7,7 @@ namespace SkinMaker;
 internal static class Utils
 {
     public static void ExitWithMessage(string message){
-        Console.ForegroundColor = ConsoleColor.Red;
-        Console.WriteLine(message);
-        Console.ResetColor();
+        Utils.WriteLine(message, ConsoleColor.Red);
         Console.Write("Press any key to close..."); Console.ReadKey();
         Environment.Exit(0);
     }
@@ -105,4 +103,27 @@ internal static class Utils
         doc.Save(Path.Combine(skinDirectory, skinName + ".MeshParams.xml"));
     }
       
+    public static void WriteLine(string msg, System.ConsoleColor color)
+    {
+        Console.ForegroundColor = color;
+        Console.WriteLine(msg);
+        Console.ResetColor();
+    }
+    
+    public static void WriteLine(string msg)
+    {
+        Console.WriteLine(msg);
+    }
+    
+    public static void Write(string msg)
+    {
+        Console.Write(msg);
+    }
+    
+    public static void Write(string msg, System.ConsoleColor color)
+    {
+        Console.ForegroundColor = color;
+        Console.Write(msg);
+        Console.ResetColor();
+    }
 }

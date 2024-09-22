@@ -6,10 +6,10 @@ class Program
 {
     private static void Main(string[] args)
     {
-        Console.WriteLine("SkinMaker version: 1.3.0");
+        Utils.WriteLine("SkinMaker version: 1.3.0");
         if (args.Length == 0)
         {
-            Console.WriteLine("Usage: SkinMaker.exe <path-to-skin-file>.fbx");
+            Utils.WriteLine("Usage: SkinMaker.exe <path-to-skin-file>.fbx");
             return;
         }
         
@@ -35,22 +35,16 @@ class Program
         var tmInstallPath = ConfigurationManager.AppSettings["TM_Install_Path"];
         if (string.IsNullOrEmpty(tmInstallPath))
         {
-            Console.ForegroundColor = ConsoleColor.Red;
-            Console.WriteLine("TM_Install_Path variable in the SkinMaker.dll.config is empty!");
-            Console.ResetColor();
-            Console.WriteLine("Trying to autodetect: ");
+            Utils.WriteLine("TM_Install_Path variable in the SkinMaker.dll.config is empty!", ConsoleColor.Red);
+            Utils.WriteLine("Trying to autodetect: ");
             var i = 0;
             var tmPath = Utils.CheckInstalled("Trackmania");
             foreach (var arg in tmPath)
             {
-                Console.ForegroundColor = ConsoleColor.White;
-                Console.WriteLine((i + 1) + ": ");
-                Console.ForegroundColor = ConsoleColor.Yellow;
-                Console.WriteLine(arg+"\n");
-                Console.ResetColor();
+                Utils.WriteLine((i + 1) + ": ", ConsoleColor.White);
+                Utils.WriteLine(arg+"\n", ConsoleColor.Yellow);
                 i += 1;
             }
-            Console.ResetColor();
             Console.Write("Please choose install location by number or press enter to exit: ");
             var answer = Console.ReadLine();
             var success = int.TryParse(answer, out var res);
@@ -64,7 +58,7 @@ class Program
             {
                 appSettings.Settings["TM_Install_Path"].Value = tmInstallPath;
                 config.Save(ConfigurationSaveMode.Modified);
-                Console.WriteLine("TM_Install_Path setting updated: " + tmInstallPath);
+                Utils.WriteLine("TM_Install_Path setting updated: " + tmInstallPath);
                 ConfigurationManager.RefreshSection("appSettings");
             }
         }
@@ -75,26 +69,22 @@ class Program
                                   "\nhttps://nadeo-download.cdn.ubi.com/trackmania/NadeoImporter_2022_07_12.zip");
         }
 
-        Console.WriteLine("\nGenerating " + skinName + ".MesParams.xml based on " + skinNameExt + "...");
+        Utils.WriteLine("\nGenerating " + skinName + ".MesParams.xml based on " + skinNameExt + "...");
         Utils.GenerateMeshParams(skinFbxPath, skinDirectory, skinName);
-        Console.ForegroundColor = ConsoleColor.Green;
-        Console.WriteLine(skinName + ".MeshParams.xml generation OK.");
-        Console.ResetColor();
+        Utils.WriteLine(skinName + ".MeshParams.xml generation OK.", ConsoleColor.Green);
         
         var sf = new SkinFix();
         SkinFix.GetSkinFixInfo().GetAwaiter().GetResult();
         var currentFolder = AppDomain.CurrentDomain.BaseDirectory;
         if (!File.Exists(Path.Combine(currentFolder, "skinfix.exe")))
         {
-            Console.ForegroundColor = ConsoleColor.Yellow;
-            Console.WriteLine("\nskinfix.exe not found. Attempting to download...");
-            Console.ResetColor();
+            Utils.WriteLine("\nskinfix.exe not found. Attempting to download...", ConsoleColor.Yellow);
             sf.DownloadSkinFix(Path.Combine(currentFolder, "skinfix.exe"), null).GetAwaiter().GetResult();
-            Console.WriteLine("skinfix.exe downloaded. Continuing.");
+            Utils.WriteLine("skinfix.exe downloaded. Continuing.");
         }
         else
         {
-            Console.WriteLine("\nChecking skinfix.exe last modified date...");
+            Utils.WriteLine("\nChecking skinfix.exe last modified date...");
             sf.CheckDateSkinFix(currentFolder).GetAwaiter().GetResult();
         }
 
@@ -105,7 +95,7 @@ class Program
             Utils.ExitWithMessage(skinName + ".MeshParams.xml doesn't exist.");
         }
 
-        Console.WriteLine("\nStarting NadeoImporter process...");
+        Utils.WriteLine("\nStarting NadeoImporter process...");
 
         var index = skinFbxPath.IndexOf("Work", StringComparison.Ordinal) + "Work".Length;
         var skinRelativePath = skinFbxPath.Substring(index);
@@ -114,9 +104,7 @@ class Program
 
         if (tmInstallPath == null)
         {
-            Console.ForegroundColor = ConsoleColor.Red;
-            Console.WriteLine("\nTM Install Path is for some reason still empty, can't continue.");
-            Console.ResetColor();
+            Utils.WriteLine("\nTM Install Path is for some reason still empty, can't continue.",ConsoleColor.Red);
             return;
         }
 
@@ -125,32 +113,26 @@ class Program
         if (!nadeoImporterOutput.Split('\n').Reverse().Skip(1).First().StartsWith("Created :user:") &&
             !nadeoImporterOutput.Split('\n').Reverse().Skip(1).First().EndsWith(".Mesh.gbx"))
         {
-            Console.WriteLine(nadeoImporterOutput);
+            Utils.WriteLine(nadeoImporterOutput);
             Utils.ExitWithMessage("NadeoImporter failed, check the output above.");
         }
         else
         {
-            Console.ForegroundColor = ConsoleColor.Green;
-            Console.WriteLine("NadeoImporter process OK.");
-            Console.ResetColor();
+            Utils.WriteLine("NadeoImporter process OK.", ConsoleColor.Green);
         }
 
 
-        Console.WriteLine("\nStarting skinfix process...");
+        Utils.WriteLine("\nStarting skinfix process...");
         Process.Start(converterExePath,
             Path.Combine(Path.GetDirectoryName(skinFbxPath.Replace("Work\\", "")) ?? string.Empty,
                 skinName + ".Mesh.gbx") + " --out " +
             Path.Combine(Path.GetDirectoryName(skinFbxPath.Replace("Work\\", "")) ?? string.Empty,
                 "MainBody.Mesh.Gbx"));
-        Console.ForegroundColor = ConsoleColor.Green;
-        Console.WriteLine("skinfix process OK...");
-        Console.ResetColor();
+        Utils.WriteLine("skinfix process OK...", ConsoleColor.Green);
         
-        Console.WriteLine("\nZipping files...");
-        Console.WriteLine(Zip.ZipFiles(skinFbxPath, skinDirectory, skinName));
-        Console.ForegroundColor = ConsoleColor.Green;
-        Console.WriteLine("\nSkin created successfully!");
-        Console.ResetColor();
+        Utils.WriteLine("\nZipping files...");
+        Utils.WriteLine(Zip.ZipFiles(skinFbxPath, skinDirectory, skinName));
+        Utils.WriteLine("\nSkin created successfully!", ConsoleColor.Green);
         var autoCloseOnFinish = bool.Parse(ConfigurationManager.AppSettings["AutoCloseOnFinish"] ?? "false");
         if (autoCloseOnFinish) return;
         Console.Write("Press any key to close...");

@@ -58,10 +58,10 @@ internal class SkinFix
 
                 if (asset.updated_at.ToString(CultureInfo.InvariantCulture) != lastExeModifiedDate)
                 {
-                    Console.WriteLine("New skinfix.exe version found, downloading...");
+                    Utils.WriteLine("New skinfix.exe version found, downloading...");
                     DownloadSkinFix(Path.Combine(currentFolder, "skinfix.exe"), asset.browser_download_url).GetAwaiter()
                         .GetResult();
-                    Console.WriteLine("done.");
+                    Utils.WriteLine("Done.", ConsoleColor.Green);
 
                     Configuration config = ConfigurationManager.OpenExeConfiguration(ConfigurationUserLevel.None);
                     var appSettings = (AppSettingsSection)config.GetSection("appSettings");
@@ -86,17 +86,13 @@ internal class SkinFix
                 }
                 else
                 {
-                    Console.ForegroundColor = ConsoleColor.Green;
-                    Console.WriteLine("skinfix.exe is up to date.");
-                    Console.ResetColor();
+                    Utils.WriteLine("skinfix.exe is up to date.", ConsoleColor.Green);
                 }
             }
 
             if (!foundSkinfix)
             {
-                Console.ForegroundColor = ConsoleColor.Green;
-                Console.WriteLine("skinfix.exe wasn't found in the latest release.");
-                Console.ResetColor();
+                Utils.WriteLine("skinfix.exe wasn't found in the latest release.", ConsoleColor.Green);
             }
         }
 
