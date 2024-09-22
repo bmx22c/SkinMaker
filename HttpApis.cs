@@ -1,14 +1,15 @@
 using System.Configuration;
 using System.Globalization;
+using System.IO.Compression;
 using System.Text.Json;
 
 namespace SkinMaker;
 
-internal class SkinFix
+internal class HttpApis
 {
     private static GitHubRoot? _skinFixInfo;
 
-    public async Task DownloadSkinFix(string path, string? downloadUrl)
+    public static async Task DownloadSkinFix(string path, string? downloadUrl)
     {
         if (downloadUrl == null)
         {
@@ -38,7 +39,7 @@ internal class SkinFix
         await fileStream.CopyToAsync(outputFileStream);
     }
 
-    public Task CheckDateSkinFix(string currentFolder)
+    public static Task CheckDateSkinFix(string currentFolder)
     {
         if (_skinFixInfo == null)
         {
@@ -107,5 +108,46 @@ internal class SkinFix
             "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:129.0) Gecko/20100101 Firefox/129.0");
         var json = await client.GetStringAsync(url);
         _skinFixInfo = JsonSerializer.Deserialize<GitHubRoot>(json);
+    }
+
+    public static async Task GetNadeoImporter(string tmPath)
+    {
+        const string file = "NadeoImporter_2022_07_12.zip";
+        const string url = "https://nadeo-download.cdn.ubi.com/trackmania/" + file;
+
+        try
+        {
+            if (!File.Exists(Path.Combine(tmPath, file)))
+            {
+                using var client = new HttpClient();
+                client.DefaultRequestHeaders.UserAgent.ParseAdd(
+                    "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:129.0) Gecko/20100101 Firefox/129.0");
+                Utils.WriteLine($"Downloading {file} to {tmPath}");
+
+                var blob = await client.GetByteArrayAsync(url);
+                await File.WriteAllBytesAsync(Path.Combine(tmPath, file), blob);
+                Utils.WriteLine("Done.", ConsoleColor.Green);
+            }
+
+            Utils.WriteLine("Extracting...");
+            using (var archive = ZipFile.OpenRead(Path.Combine(tmPath, file)))
+            {
+                foreach (var entry in archive.Entries)
+                {
+                    var destinationPath = Path.GetFullPath(Path.Combine(tmPath, entry.Name));
+                    if (string.IsNullOrEmpty(entry.Name)) continue;
+                    Utils.WriteLine(destinationPath + "...", ConsoleColor.DarkCyan);
+                    entry.ExtractToFile(destinationPath, true);
+                }
+            }
+
+            Utils.WriteLine("Done.", ConsoleColor.Green);
+        }
+        catch (Exception e)
+        {
+            Utils.WriteLine("Please check the errors and resolve unzip manually:");
+            Utils.ExitWithMessage(e.Message);
+            
+        }
     }
 }

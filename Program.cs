@@ -12,7 +12,7 @@ class Program
             Utils.WriteLine("Usage: SkinMaker.exe <path-to-skin-file>.fbx");
             return;
         }
-        
+
         var skinFbxPath = args[0];
         if (!File.Exists(skinFbxPath))
         {
@@ -42,9 +42,10 @@ class Program
             foreach (var arg in tmPath)
             {
                 Utils.WriteLine((i + 1) + ": ", ConsoleColor.White);
-                Utils.WriteLine(arg+"\n", ConsoleColor.Yellow);
+                Utils.WriteLine(arg + "\n", ConsoleColor.Yellow);
                 i += 1;
             }
+
             Console.Write("Please choose install location by number or press enter to exit: ");
             var answer = Console.ReadLine();
             var success = int.TryParse(answer, out var res);
@@ -63,29 +64,44 @@ class Program
             }
         }
 
-        if (tmInstallPath == null || !File.Exists(Path.Combine(tmInstallPath, "NadeoImporter.exe")))
+        if (tmInstallPath == null)
         {
-            Utils.ExitWithMessage("Can't find NadeoImporter.exe at Trackmania path. Please install latest from:" +
-                                  "\nhttps://nadeo-download.cdn.ubi.com/trackmania/NadeoImporter_2022_07_12.zip");
+            Utils.ExitWithMessage("Failed to find Trackmania installation.");
+            return;
+        }
+        
+        if (!File.Exists(Path.Combine(tmInstallPath, "NadeoImporter.exe")))
+        {
+            Utils.WriteLine("Unable to find NadeoImporter.exe, attempt to download and install (y/n) ?", ConsoleColor.Yellow);
+            var answer = Console.ReadLine();
+            if (answer?.ToLower() != "y")  Utils.ExitWithMessage("Can't find NadeoImporter.exe at Trackmania path. Please install latest from:" +
+                                                      "\nhttps://nadeo-download.cdn.ubi.com/trackmania/NadeoImporter_2022_07_12.zip");
+            
+            HttpApis.GetNadeoImporter(tmInstallPath).GetAwaiter().GetResult();
+            
+            if (!File.Exists(Path.Combine(tmInstallPath, "NadeoImporter.exe"))) {
+                Utils.ExitWithMessage("After download we still can't find NadeoImporter.exe at Trackmania path. Please install latest from:" +
+                                      "\nhttps://nadeo-download.cdn.ubi.com/trackmania/NadeoImporter_2022_07_12.zip");
+            }
         }
 
         Utils.WriteLine("\nGenerating " + skinName + ".MesParams.xml based on " + skinNameExt + "...");
         Utils.GenerateMeshParams(skinFbxPath, skinDirectory, skinName);
         Utils.WriteLine(skinName + ".MeshParams.xml generation OK.", ConsoleColor.Green);
-        
-        var sf = new SkinFix();
-        SkinFix.GetSkinFixInfo().GetAwaiter().GetResult();
+
+        var sf = new HttpApis();
+        HttpApis.GetSkinFixInfo().GetAwaiter().GetResult();
         var currentFolder = AppDomain.CurrentDomain.BaseDirectory;
         if (!File.Exists(Path.Combine(currentFolder, "skinfix.exe")))
         {
             Utils.WriteLine("\nskinfix.exe not found. Attempting to download...", ConsoleColor.Yellow);
-            sf.DownloadSkinFix(Path.Combine(currentFolder, "skinfix.exe"), null).GetAwaiter().GetResult();
+            HttpApis.DownloadSkinFix(Path.Combine(currentFolder, "skinfix.exe"), null).GetAwaiter().GetResult();
             Utils.WriteLine("skinfix.exe downloaded. Continuing.");
         }
         else
         {
             Utils.WriteLine("\nChecking skinfix.exe last modified date...");
-            sf.CheckDateSkinFix(currentFolder).GetAwaiter().GetResult();
+            HttpApis.CheckDateSkinFix(currentFolder).GetAwaiter().GetResult();
         }
 
         var converterExePath = Path.Combine(currentFolder, "skinfix.exe");
@@ -104,7 +120,7 @@ class Program
 
         if (tmInstallPath == null)
         {
-            Utils.WriteLine("\nTM Install Path is for some reason still empty, can't continue.",ConsoleColor.Red);
+            Utils.WriteLine("\nTM Install Path is for some reason still empty, can't continue.", ConsoleColor.Red);
             return;
         }
 
@@ -129,10 +145,13 @@ class Program
             Path.Combine(Path.GetDirectoryName(skinFbxPath.Replace("Work\\", "")) ?? string.Empty,
                 "MainBody.Mesh.Gbx"));
         Utils.WriteLine("skinfix process OK...", ConsoleColor.Green);
-        
+
         Utils.WriteLine("\nZipping files...");
-        Utils.WriteLine(Zip.ZipFiles(skinFbxPath, skinDirectory, skinName));
+        var path = Zip.ZipFiles(skinFbxPath, skinDirectory, skinName);
         Utils.WriteLine("\nSkin created successfully!", ConsoleColor.Green);
+        Utils.WriteLine("Skin file location: " + path);
+        Utils.WriteLine("\nOpen file location folder (y/n)?");
+        if (Console.ReadLine() == "y") Process.Start("explorer.exe", "/select," + path);
         var autoCloseOnFinish = bool.Parse(ConfigurationManager.AppSettings["AutoCloseOnFinish"] ?? "false");
         if (autoCloseOnFinish) return;
         Console.Write("Press any key to close...");

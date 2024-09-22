@@ -11,8 +11,7 @@ internal static class Zip
         var filesWork = Directory.GetFiles(folderWork);
         var filesSkin = Directory.GetFiles(folderSkin);
 
-        // Yeah I'll just one line this.
-        // It select all JSON, DDS and .XXX.Gbx BUT NOT .mesh.gbx
+        // select all JSON, DDS and .XXX.Gbx BUT NOT .mesh.gbx
         const string filterPattern = @"^[^\.]+\.json|[^\.]+\.dds|(?!.*\.mesh\.gbx$)[^\.]+\.[^\.]+\.gbx$";
 
         var filesToZip = filesWork.Where(file => Regex.IsMatch(Path.GetFileName(file).ToLower(), filterPattern)).ToList();
@@ -42,8 +41,8 @@ internal static class Zip
             }
 
             File.Move(zipFileName, Path.Combine(destinationFolder, skinName + ".zip"), true);
-            return "Created zip file: " + Path.Combine(destinationFolder, skinName + ".zip");
+            return Path.Combine(destinationFolder, skinName + ".zip");
         }
-        return "No files found in " + folderWork;
+        return string.Empty;
     }
 }
