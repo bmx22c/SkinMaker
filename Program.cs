@@ -142,8 +142,12 @@ internal static class Program
         var path = Zip.ZipFiles(skinFbxPath, skinDirectory, skinName);
         Utils.WriteLine("\nSkin created successfully!", ConsoleColor.Green);
         Utils.WriteLine("Skin file location: " + path);
-        Utils.WriteLine("\nOpen file location folder (y/n)?");
-        if (Console.ReadLine() == "y") Process.Start("explorer.exe", "/select," + path);
+        var askOpenFileLocation = bool.Parse(ConfigurationManager.AppSettings["AskOpenFileLocation"] ?? "true");
+        if(askOpenFileLocation)
+        {
+            Utils.WriteLine("\nOpen file location folder (y/n)?");
+            if (Console.ReadLine() == "y") Process.Start("explorer.exe", "/select," + path);
+        }
         var autoCloseOnFinish = bool.Parse(ConfigurationManager.AppSettings["AutoCloseOnFinish"] ?? "false");
         if (autoCloseOnFinish) return;
         Console.Write("Press any key to close...");
