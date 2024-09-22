@@ -22,24 +22,20 @@ internal static class Utils
 
         foreach (string registryKey in registryKeys)
         {
-            using (RegistryKey key = Registry.LocalMachine.OpenSubKey(registryKey))
+            using var key = Registry.LocalMachine.OpenSubKey(registryKey);
+            if (key == null) continue;
+
+            foreach (string subKeyName in key.GetSubKeyNames())
             {
-                if (key == null) continue;
-
-                foreach (string subKeyName in key.GetSubKeyNames())
+                using var subKey = key.OpenSubKey(subKeyName);
+                if (subKey != null)
                 {
-                    using (RegistryKey subKey = key.OpenSubKey(subKeyName))
-                    {
-                        if (subKey != null)
-                        {
-                            string displayName = (string)subKey.GetValue("DisplayName");
-                            string installLocation = (string)subKey.GetValue("InstallLocation");
+                    var displayName = (string)subKey.GetValue("DisplayName")!;
+                    var installLocation = (string)subKey.GetValue("InstallLocation")!;
 
-                            if (!string.IsNullOrEmpty(displayName) && displayName.Contains(findByName) && !string.IsNullOrEmpty(installLocation))
-                                installPath.Add(installLocation);
+                    if (!string.IsNullOrEmpty(displayName) && displayName.Contains(findByName) && !string.IsNullOrEmpty(installLocation))
+                        installPath.Add(installLocation);
 
-                        }
-                    }
                 }
             }
         }
@@ -103,7 +99,7 @@ internal static class Utils
         doc.Save(Path.Combine(skinDirectory, skinName + ".MeshParams.xml"));
     }
       
-    public static void WriteLine(string msg, System.ConsoleColor color)
+    public static void WriteLine(string msg, ConsoleColor color)
     {
         Console.ForegroundColor = color;
         Console.WriteLine(msg);
@@ -120,7 +116,7 @@ internal static class Utils
         Console.Write(msg);
     }
     
-    public static void Write(string msg, System.ConsoleColor color)
+    public static void Write(string msg, ConsoleColor color)
     {
         Console.ForegroundColor = color;
         Console.Write(msg);

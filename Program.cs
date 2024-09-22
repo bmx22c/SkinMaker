@@ -2,7 +2,7 @@
 
 namespace SkinMaker;
 
-class Program
+internal static class Program
 {
     private static void Main(string[] args)
     {
@@ -15,22 +15,17 @@ class Program
 
         var skinFbxPath = args[0];
         if (!File.Exists(skinFbxPath))
-        {
             Utils.ExitWithMessage($"File '{Path.GetFileName(skinFbxPath)}' not exists.");
-        }
 
         if (!skinFbxPath.Contains(@"\Work\"))
-        {
             Utils.ExitWithMessage("File isn't in a Work folder.");
-        }
 
         var skinName = Path.GetFileNameWithoutExtension(skinFbxPath);
         var skinNameExt = Path.GetFileName(skinFbxPath);
         var skinDirectory = Path.GetDirectoryName(skinFbxPath) ?? "";
         if (string.IsNullOrEmpty(skinDirectory))
-        {
             Utils.ExitWithMessage("Unhandled error.");
-        }
+
 
         var tmInstallPath = ConfigurationManager.AppSettings["TM_Install_Path"];
         if (string.IsNullOrEmpty(tmInstallPath))
@@ -69,19 +64,23 @@ class Program
             Utils.ExitWithMessage("Failed to find Trackmania installation.");
             return;
         }
-        
+
         if (!File.Exists(Path.Combine(tmInstallPath, "NadeoImporter.exe")))
         {
-            Utils.WriteLine("Unable to find NadeoImporter.exe, attempt to download and install (y/n) ?", ConsoleColor.Yellow);
+            Utils.WriteLine("Unable to find NadeoImporter.exe, attempt to download and install (y/n) ?",
+                ConsoleColor.Yellow);
             var answer = Console.ReadLine();
-            if (answer?.ToLower() != "y")  Utils.ExitWithMessage("Can't find NadeoImporter.exe at Trackmania path. Please install latest from:" +
-                                                      "\nhttps://nadeo-download.cdn.ubi.com/trackmania/NadeoImporter_2022_07_12.zip");
-            
-            HttpApis.GetNadeoImporter(tmInstallPath).GetAwaiter().GetResult();
-            
-            if (!File.Exists(Path.Combine(tmInstallPath, "NadeoImporter.exe"))) {
-                Utils.ExitWithMessage("After download we still can't find NadeoImporter.exe at Trackmania path. Please install latest from:" +
+            if (answer?.ToLower() != "y")
+                Utils.ExitWithMessage("Can't find NadeoImporter.exe at Trackmania path. Please install latest from:" +
                                       "\nhttps://nadeo-download.cdn.ubi.com/trackmania/NadeoImporter_2022_07_12.zip");
+
+            HttpApis.GetNadeoImporter(tmInstallPath).GetAwaiter().GetResult();
+
+            if (!File.Exists(Path.Combine(tmInstallPath, "NadeoImporter.exe")))
+            {
+                Utils.ExitWithMessage(
+                    "After download we still can't find NadeoImporter.exe at Trackmania path. Please install latest from:" +
+                    "\nhttps://nadeo-download.cdn.ubi.com/trackmania/NadeoImporter_2022_07_12.zip");
             }
         }
 
@@ -89,7 +88,6 @@ class Program
         Utils.GenerateMeshParams(skinFbxPath, skinDirectory, skinName);
         Utils.WriteLine(skinName + ".MeshParams.xml generation OK.", ConsoleColor.Green);
 
-        var sf = new HttpApis();
         HttpApis.GetSkinFixInfo().GetAwaiter().GetResult();
         var currentFolder = AppDomain.CurrentDomain.BaseDirectory;
         if (!File.Exists(Path.Combine(currentFolder, "skinfix.exe")))
@@ -117,12 +115,6 @@ class Program
         var skinRelativePath = skinFbxPath.Substring(index);
         var lastSlashIndex = skinRelativePath.LastIndexOf("\\", StringComparison.Ordinal);
         skinRelativePath = skinRelativePath.Substring(0, lastSlashIndex);
-
-        if (tmInstallPath == null)
-        {
-            Utils.WriteLine("\nTM Install Path is for some reason still empty, can't continue.", ConsoleColor.Red);
-            return;
-        }
 
         var nadeoImporterOutput = Process.Start(Path.Combine(tmInstallPath, "NadeoImporter.exe"),
             "Mesh " + Path.Combine(skinRelativePath, skinNameExt));

@@ -5,23 +5,22 @@ using System.Text.Json;
 
 namespace SkinMaker;
 
-internal class HttpApis
+internal static class HttpApis
 {
     private static GitHubRoot? _skinFixInfo;
 
     public static async Task DownloadSkinFix(string path, string? downloadUrl)
     {
-        if (downloadUrl == null)
+        if (downloadUrl == null && _skinFixInfo?.assets != null)
         {
-            if (_skinFixInfo?.assets != null)
-                foreach (var asset in _skinFixInfo.assets)
+            foreach (var asset in _skinFixInfo.assets)
+            {
+                if (asset.name == "skinfix.exe")
                 {
-                    if (asset.name == "skinfix.exe")
-                    {
-                        downloadUrl = asset.browser_download_url;
-                        break;
-                    }
+                    downloadUrl = asset.browser_download_url;
+                    break;
                 }
+            }
         }
 
         if (downloadUrl == null)
@@ -46,56 +45,55 @@ internal class HttpApis
             Utils.ExitWithMessage(
                 "Couldn't retrieve skinfix.exe build date. " +
                 "\nPlease download it manually at: https://github.com/drunub/tm2020-skin-tools/releases/latest/");
+            return Task.CompletedTask;
         }
-        else
+        
+        var lastExeModifiedDate = ConfigurationManager.AppSettings["LastExeModifiedDate"] ?? "";
+        var foundSkinfix = false;
+
+        foreach (var asset in _skinFixInfo.assets.Where(asset => asset.name == "skinfix.exe"))
         {
-            var lastExeModifiedDate = ConfigurationManager.AppSettings["LastExeModifiedDate"] ?? "";
-            var foundSkinfix = false;
+            foundSkinfix = true;
 
-            foreach (var asset in _skinFixInfo.assets)
+            if (asset.updated_at.ToString(CultureInfo.InvariantCulture) != lastExeModifiedDate)
             {
-                if (asset.name != "skinfix.exe") continue;
-                foundSkinfix = true;
+                Utils.WriteLine("New skinfix.exe version found, downloading...");
+                DownloadSkinFix(Path.Combine(currentFolder, "skinfix.exe"), asset.browser_download_url).GetAwaiter()
+                    .GetResult();
+                Utils.WriteLine("Done.", ConsoleColor.Green);
 
-                if (asset.updated_at.ToString(CultureInfo.InvariantCulture) != lastExeModifiedDate)
+                var config = ConfigurationManager.OpenExeConfiguration(ConfigurationUserLevel.None);
+                var appSettings = (AppSettingsSection)config.GetSection("appSettings");
+                if (appSettings == null) continue;
+                // Modify the existing setting or add a new one
+                if (appSettings.Settings["LastExeModifiedDate"] != null)
                 {
-                    Utils.WriteLine("New skinfix.exe version found, downloading...");
-                    DownloadSkinFix(Path.Combine(currentFolder, "skinfix.exe"), asset.browser_download_url).GetAwaiter()
-                        .GetResult();
-                    Utils.WriteLine("Done.", ConsoleColor.Green);
-
-                    Configuration config = ConfigurationManager.OpenExeConfiguration(ConfigurationUserLevel.None);
-                    var appSettings = (AppSettingsSection)config.GetSection("appSettings");
-                    if (appSettings == null) continue;
-                    // Modify the existing setting or add a new one
-                    if (appSettings.Settings["LastExeModifiedDate"] != null)
-                    {
-                        appSettings.Settings["LastExeModifiedDate"].Value =
-                            asset.updated_at.ToString(CultureInfo.InvariantCulture);
-                    }
-                    else
-                    {
-                        appSettings.Settings.Add("LastExeModifiedDate",
-                            asset.updated_at.ToString(CultureInfo.InvariantCulture));
-                    }
-
-                    // Save the configuration file
-                    config.Save(ConfigurationSaveMode.Modified);
-
-                    // Refresh the appSettings section to reflect changes
-                    ConfigurationManager.RefreshSection("appSettings");
+                    appSettings.Settings["LastExeModifiedDate"].Value =
+                        asset.updated_at.ToString(CultureInfo.InvariantCulture);
                 }
                 else
                 {
-                    Utils.WriteLine("skinfix.exe is up to date.", ConsoleColor.Green);
+                    appSettings.Settings.Add("LastExeModifiedDate",
+                        asset.updated_at.ToString(CultureInfo.InvariantCulture));
                 }
-            }
 
-            if (!foundSkinfix)
+                // Save the configuration file
+                config.Save(ConfigurationSaveMode.Modified);
+
+                // Refresh the appSettings section to reflect changes
+                ConfigurationManager.RefreshSection("appSettings");
+            }
+            else
             {
-                Utils.WriteLine("skinfix.exe wasn't found in the latest release.", ConsoleColor.Green);
+                Utils.WriteLine("skinfix.exe is up to date.", ConsoleColor.Green);
             }
         }
+
+        if (!foundSkinfix)
+        {
+            Utils.WriteLine("skinfix.exe wasn't found in the latest release.", ConsoleColor.Green);
+        }
+
 
         return Task.CompletedTask;
     }
@@ -147,7 +145,6 @@ internal class HttpApis
         {
             Utils.WriteLine("Please check the errors and resolve unzip manually:");
             Utils.ExitWithMessage(e.Message);
-            
         }
     }
 }
