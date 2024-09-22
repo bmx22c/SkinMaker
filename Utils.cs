@@ -38,7 +38,7 @@ internal static class Utils
                             string installLocation = (string)subKey.GetValue("InstallLocation");
 
                             if (!string.IsNullOrEmpty(displayName) && displayName.Contains(findByName) && !string.IsNullOrEmpty(installLocation))
-                                installPath.Add($"{displayName} - {installLocation}");
+                                installPath.Add(installLocation);
 
                         }
                     }
