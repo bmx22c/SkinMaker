@@ -5,9 +5,11 @@
     <TargetFramework>net6.0</TargetFramework>
     <ImplicitUsings>enable</ImplicitUsings>
     <Nullable>enable</Nullable>
+    <ApplicationIcon>Icon.ico</ApplicationIcon>
   </PropertyGroup>
 
   <ItemGroup>
+	<SupportedPlatform Include="Windows" />
     <PackageReference Include="AssimpNet" Version="4.1.0" />
     <PackageReference Include="HtmlAgilityPack" Version="1.11.61" />
     <PackageReference Include="System.Configuration.ConfigurationManager" Version="8.0.0" />
