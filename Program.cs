@@ -6,7 +6,7 @@ internal static class Program
 {
     private static void Main(string[] args)
     {
-        Utils.WriteLine("SkinMaker version: 1.3.0");
+        Utils.WriteLine("SkinMaker version: 1.5.0");
         if (args.Length == 0)
         {
             Utils.WriteLine("Usage: SkinMaker.exe <path-to-skin-file>.fbx");
