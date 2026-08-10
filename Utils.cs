@@ -8,7 +8,7 @@ internal static class Utils
 {
     public static void ExitWithMessage(string message){
         Utils.WriteLine(message, ConsoleColor.Red);
-        Console.Write("Press any key to close..."); Console.ReadKey();
+        Console.Write("Press any key to close..."); Console.Read();
         Environment.Exit(0);
     }
     

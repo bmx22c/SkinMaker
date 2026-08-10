@@ -17,7 +17,7 @@ internal static class Program
         if (!File.Exists(skinFbxPath))
             Utils.ExitWithMessage($"File '{Path.GetFileName(skinFbxPath)}' not exists.");
 
-        if (!skinFbxPath.Contains(@"\Work\"))
+        if (!skinFbxPath.Contains(@"\Work\") && !skinFbxPath.Contains(@"/Work/") )
             Utils.ExitWithMessage("File isn't in a Work folder.");
 
         var skinName = Path.GetFileNameWithoutExtension(skinFbxPath);
@@ -31,23 +31,33 @@ internal static class Program
         if (string.IsNullOrEmpty(tmInstallPath))
         {
             Utils.WriteLine("TM_Install_Path variable in the SkinMaker.dll.config is empty!", ConsoleColor.Red);
-            Utils.WriteLine("Trying to autodetect: ");
-            var i = 0;
-            var tmPath = Utils.CheckInstalled("Trackmania");
-            foreach (var arg in tmPath)
+
+            if (OperatingSystem.IsLinux())
             {
-                Utils.WriteLine((i + 1) + ": ", ConsoleColor.White);
-                Utils.WriteLine(arg + "\n", ConsoleColor.Yellow);
-                i += 1;
+                Console.Write("Please add the location where Trackmania is installed (alongside its Nadeo.ini).");
+                tmInstallPath = Console.ReadLine();
+            }
+            else
+            {
+                Utils.WriteLine("Trying to autodetect: ");
+                var i = 0;
+                var tmPath = Utils.CheckInstalled("Trackmania");
+                foreach (var arg in tmPath)
+                {
+                    Utils.WriteLine((i + 1) + ": ", ConsoleColor.White);
+                    Utils.WriteLine(arg + "\n", ConsoleColor.Yellow);
+                    i += 1;
+                }
+
+                Console.Write("Please choose install location by number or press enter to exit: ");
+                var answer = Console.ReadLine();
+                var success = int.TryParse(answer, out var res);
+                if (!success || answer == null || answer.ToLower() == "q")
+                    Utils.ExitWithMessage("Can't find Trackmania installation.");
+                if (res > 0 && res <= tmPath.Count) tmInstallPath = tmPath[res - 1];
+                else Utils.ExitWithMessage("Invalid Range.");
             }
 
-            Console.Write("Please choose install location by number or press enter to exit: ");
-            var answer = Console.ReadLine();
-            var success = int.TryParse(answer, out var res);
-            if (!success || answer == null || answer.ToLower() == "q")
-                Utils.ExitWithMessage("Can't find Trackmania installation.");
-            if (res > 0 && res <= tmPath.Count) tmInstallPath = tmPath[res - 1];
-            else Utils.ExitWithMessage("Invalid Range.");
             var config = ConfigurationManager.OpenExeConfiguration(ConfigurationUserLevel.None);
             var appSettings = (AppSettingsSection)config.GetSection("appSettings");
             if (appSettings != null)
@@ -113,11 +123,30 @@ internal static class Program
 
         var index = skinFbxPath.IndexOf("Work", StringComparison.Ordinal) + "Work".Length;
         var skinRelativePath = skinFbxPath.Substring(index);
-        var lastSlashIndex = skinRelativePath.LastIndexOf("\\", StringComparison.Ordinal);
+        var lastSlashIndex = -1;
+        if (OperatingSystem.IsLinux())
+        {
+            lastSlashIndex = skinRelativePath.LastIndexOf("/", StringComparison.Ordinal);
+        }
+        else
+        {
+            lastSlashIndex = skinRelativePath.LastIndexOf("\\", StringComparison.Ordinal);
+        }
         skinRelativePath = skinRelativePath.Substring(0, lastSlashIndex);
 
-        var nadeoImporterOutput = Process.Start(Path.Combine(tmInstallPath, "NadeoImporter.exe"),
-            "Mesh " + Path.Combine(skinRelativePath, skinNameExt));
+        string nadeoImporterOutput;
+        if (OperatingSystem.IsLinux())
+        {
+            nadeoImporterOutput = Process.Start("wine", Path.Combine(tmInstallPath, "NadeoImporter.exe")
+                + " Mesh " + Path.Combine(skinRelativePath, skinNameExt));
+        }
+        else
+        {
+            nadeoImporterOutput = Process.Start(Path.Combine(tmInstallPath, "NadeoImporter.exe"),
+                "Mesh " + Path.Combine(skinRelativePath, skinNameExt));
+            
+        }
+
         if (!nadeoImporterOutput.Split('\n').Reverse().Skip(1).First().StartsWith("Created :user:") &&
             !nadeoImporterOutput.Split('\n').Reverse().Skip(1).First().EndsWith(".Mesh.gbx"))
         {
@@ -131,11 +160,23 @@ internal static class Program
 
 
         Utils.WriteLine("\nStarting skinfix process...");
-        Process.Start(converterExePath,
-            Path.Combine(Path.GetDirectoryName(skinFbxPath.Replace("Work\\", "")) ?? string.Empty,
-                skinName + ".Mesh.gbx") + " --out " +
-            Path.Combine(Path.GetDirectoryName(skinFbxPath.Replace("Work\\", "")) ?? string.Empty,
-                "MainBody.Mesh.Gbx"));
+        if (OperatingSystem.IsLinux())
+        {
+            Process.Start("wine",
+                converterExePath +
+                Path.Combine(Path.GetDirectoryName(skinFbxPath.Replace("Work\\", "")) ?? string.Empty,
+                    skinName + ".Mesh.gbx") + " --out " +
+                Path.Combine(Path.GetDirectoryName(skinFbxPath.Replace("Work\\", "")) ?? string.Empty,
+                    "MainBody.Mesh.Gbx"));
+        }
+        else
+        {
+            Process.Start(converterExePath,
+                Path.Combine(Path.GetDirectoryName(skinFbxPath.Replace("Work\\", "")) ?? string.Empty,
+                    skinName + ".Mesh.gbx") + " --out " +
+                Path.Combine(Path.GetDirectoryName(skinFbxPath.Replace("Work\\", "")) ?? string.Empty,
+                    "MainBody.Mesh.Gbx"));
+        }
         Utils.WriteLine("skinfix process OK...", ConsoleColor.Green);
 
         Utils.WriteLine("\nZipping files...");
@@ -146,11 +187,18 @@ internal static class Program
         if(askOpenFileLocation)
         {
             Utils.WriteLine("\nOpen file location folder (y/n)?");
-            if (Console.ReadLine() == "y") Process.Start("explorer.exe", "/select," + path);
+            if (OperatingSystem.IsLinux())
+            {
+                if (Console.ReadLine() == "y") Process.Start("xdg-open", Path.GetDirectoryName(path));
+            }
+            else
+            {
+                if (Console.ReadLine() == "y") Process.Start("explorer.exe", "/select," + path);
+            }
         }
         var autoCloseOnFinish = bool.Parse(ConfigurationManager.AppSettings["AutoCloseOnFinish"] ?? "false");
         if (autoCloseOnFinish) return;
         Console.Write("Press any key to close...");
-        Console.ReadKey();
+        Console.Read();
     }
 }
